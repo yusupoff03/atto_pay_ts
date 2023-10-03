@@ -3,11 +3,12 @@ import { verify } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
 import pg from '@database';
 import { HttpException } from '@exceptions/httpException';
-import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
+import { DataStoredInToken, RequestWithCustomer } from '@interfaces/auth.interface';
+import { Customer } from '@interfaces/customers.interface';
 
 const getAuthorization = req => {
-  const coockie = req.cookies['Authorization'];
-  if (coockie) return coockie;
+  const cookie = req.cookies['Authorization'];
+  if (cookie) return cookie;
 
   const header = req.header('Authorization');
   if (header) return header.split('Bearer ')[1];
@@ -15,24 +16,28 @@ const getAuthorization = req => {
   return null;
 };
 
-export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+export const AuthMiddleware = async (req: RequestWithCustomer, res: Response, next: NextFunction) => {
   try {
     const Authorization = getAuthorization(req);
 
     if (Authorization) {
       const { id } = (await verify(Authorization, SECRET_KEY)) as DataStoredInToken;
-      const { rows, rowCount } = await pg.query(`
+
+      const { rows, rowCount } = await pg.query(
+        `
         SELECT
-          "email",
-          "password"
+          "phone",
+          "hashed_password"
         FROM
-          users
+          customer
         WHERE
           "id" = $1
-      `);
+      `,
+        [id],
+      );
 
       if (rowCount) {
-        req.user = rows[0];
+        req.customer = rows[0] as Customer;
         next();
       } else {
         next(new HttpException(401, 'Wrong authentication token'));

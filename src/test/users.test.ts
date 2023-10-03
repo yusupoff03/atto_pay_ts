@@ -1,31 +1,31 @@
 import request from 'supertest';
 import { App } from '@/app';
 import pg from '@database';
-import { CreateUserDto } from '@dtos/customer.dto';
-import { UserRoute } from '@routes/users.route';
+import { CreateCustomerDto } from '@dtos/customer.dto';
+import { CustomersRoute } from '@routes/customers.route';
 
 afterAll(async () => {
   await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
   pg.end();
 });
 
-describe('Testing Users', () => {
-  describe('[GET] /users', () => {
+describe('Testing Customers', () => {
+  describe('[GET] /customer', () => {
     it('response statusCode 200 / findAll', async () => {
-      const usersRoute = new UserRoute();
-      const app = new App([usersRoute]);
+      const customerRoute = new CustomersRoute();
+      const app = new App([customerRoute]);
 
-      return await request(app.getServer()).get(`${usersRoute.path}`).expect(200);
+      return await request(app.getServer()).get(`${customerRoute.path}`).expect(200);
     });
   });
 
-  describe('[GET] /users/:id', () => {
+  describe('[GET] /customer/:id', () => {
     it('response statusCode 200 / findOne', async () => {
-      const usersRoute = new UserRoute();
-      const app = new App([usersRoute]);
+      const customerRoute = new CustomersRoute();
+      const app = new App([customerRoute]);
 
       return await request(app.getServer())
-        .get(`${usersRoute.path}`)
+        .get(`${customerRoute.path}`)
         .query({
           userId: 1,
         })
@@ -33,40 +33,40 @@ describe('Testing Users', () => {
     });
   });
 
-  describe('[POST] /users', () => {
+  describe('[POST] /customer', () => {
     it('response statusCode 201 / created', async () => {
-      const userData: CreateUserDto = {
-        email: 'example@email.com',
+      const userData: CreateCustomerDto = {
+        phone: 'example@email.com',
         password: 'password',
       };
-      const usersRoute = new UserRoute();
-      const app = new App([usersRoute]);
+      const customerRoute = new CustomersRoute();
+      const app = new App([customerRoute]);
 
-      return await request(app.getServer()).post(`${usersRoute.path}`).send(userData).expect(201);
+      return await request(app.getServer()).post(`${customerRoute.path}`).send(userData).expect(201);
     });
   });
 
-  describe('[PUT] /users/:id', () => {
+  describe('[PUT] /customer/:id', () => {
     it('response statusCode 200 / updated', async () => {
       const userId = 1;
-      const userData: CreateUserDto = {
-        email: 'example@email.com',
+      const userData: CreateCustomerDto = {
+        phone: 'example@email.com',
         password: 'password',
       };
-      const usersRoute = new UserRoute();
-      const app = new App([usersRoute]);
+      const customerRoute = new CustomersRoute();
+      const app = new App([customerRoute]);
 
-      return await request(app.getServer()).put(`${usersRoute.path}/${userId}`).send(userData).expect(200);
+      return await request(app.getServer()).put(`${customerRoute.path}/${userId}`).send(userData).expect(200);
     });
   });
 
-  describe('[DELETE] /users/:id', () => {
+  describe('[DELETE] /customer/:id', () => {
     it('response statusCode 200 / deleted', async () => {
       const userId = 1;
-      const usersRoute = new UserRoute();
-      const app = new App([usersRoute]);
+      const customerRoute = new CustomersRoute();
+      const app = new App([customerRoute]);
 
-      return await request(app.getServer()).delete(`${usersRoute.path}/${userId}`).expect(200);
+      return await request(app.getServer()).delete(`${customerRoute.path}/${userId}`).expect(200);
     });
   });
 });

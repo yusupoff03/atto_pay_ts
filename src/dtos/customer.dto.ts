@@ -1,7 +1,7 @@
-import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
 
 export class CreateCustomerDto {
-  @IsEmail()
+  public name: string;
   public phone: string;
 
   @IsString()
@@ -12,6 +12,8 @@ export class CreateCustomerDto {
 }
 
 export class UpdateCustomerDto {
+  @IsString()
+  public name: string;
   @IsString()
   @IsNotEmpty()
   @MinLength(9)

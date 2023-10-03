@@ -6,9 +6,8 @@ import pg from '@database';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { Customer } from '@interfaces/customers.interface';
-
-const createToken = (user: Customer): TokenData => {
-  const dataStoredInToken: DataStoredInToken = { id: user.id };
+const createToken = (customer: Customer): TokenData => {
+  const dataStoredInToken: DataStoredInToken = { id: customer.id };
   const expiresIn: number = 60 * 60;
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
@@ -20,38 +19,38 @@ const createCookie = (tokenData: TokenData): string => {
 
 @Service()
 export class AuthService {
-  public async signup(customerData: Customer): Promise<Customer> {
-    const { phone, password } = customerData;
-
-    const { rows: findUser } = await pg.query(
+  public async signup(customerData: Customer, uid: string): Promise<Customer> {
+    const { name, phone, password } = customerData;
+    const { rows: findCustomer } = await pg.query(
       `
     SELECT EXISTS(
       SELECT
         "phone"
       FROM
-        users
+        customer
       WHERE
         "phone" = $1
     )`,
       [phone],
     );
-    if (findUser[0].exists) throw new HttpException(409, `This phone ${customerData.phone} already exists`);
+    if (findCustomer[0].exists) throw new HttpException(409, `This phone ${customerData.phone} already exists`);
 
     const hashedPassword = await hash(password, 10);
-    const { rows: signUpUserData } = await pg.query(
+    const { rows: signUpCustomerData } = await pg.query(
       `
       INSERT INTO
-        users(
+        customer(
+          "name",
           "phone",
-          "password"
+          "hashed_password"
         )
-      VALUES ($1, $2)
-      RETURNING "phone", "password"
+      VALUES ($1, $2,$3)
+      RETURNING "id",phone,hashed_password
       `,
-      [phone, hashedPassword],
+      [name, phone, hashedPassword],
     );
-
-    return signUpUserData[0];
+    pg.query(`INSERT INTO customer_device(customer_id,device_id) values ($1,$2)`, [signUpCustomerData[0].id, uid]);
+    return signUpCustomerData[0];
   }
 
   public async login(CustomerData: Customer): Promise<{ cookie: string; findCustomer: Customer }> {
@@ -59,19 +58,17 @@ export class AuthService {
 
     const { rows, rowCount } = await pg.query(
       `
-      SELECT
-        "phone",
-        "password"
-      FROM
-        users
-      WHERE
-        "phone" = $1
-    `,
+          SELECT "id",
+                 "phone",
+                 "hashed_password"
+          FROM customer
+          WHERE "phone" = $1
+      `,
       [phone],
     );
     if (!rowCount) throw new HttpException(409, `This phone ${phone} was not found`);
 
-    const isPasswordMatching: boolean = await compare(password, rows[0].password);
+    const isPasswordMatching: boolean = await compare(password, rows[0].hashed_password);
     if (!isPasswordMatching) throw new HttpException(409, "You're password not matching");
 
     const tokenData = createToken(rows[0]);
@@ -80,21 +77,21 @@ export class AuthService {
   }
 
   public async logout(customerData: Customer): Promise<Customer> {
-    const { phone, password } = customerData;
+    const { phone, hashed_password } = customerData;
 
     const { rows, rowCount } = await pg.query(
       `
     SELECT
         "phone",
-        "password"
+        "hashed_password"
       FROM
-        users
+       customer
       WHERE
         "phone" = $1
       AND
-        "password" = $2
+        "hashed_password" = $2
     `,
-      [phone, password],
+      [phone, hashed_password],
     );
     if (!rowCount) throw new HttpException(409, "Customer doesn't exist");
 

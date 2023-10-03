@@ -1,61 +1,78 @@
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
-import { User } from '@interfaces/customers.interface';
-import { UserService } from '@services/users.service';
+import { Customer } from '@interfaces/customers.interface';
+import { CustomerService } from '@services/customers.service';
+import { DataStoredInToken } from '@interfaces/auth.interface';
+import { SECRET_KEY } from '@config';
+import { verify } from 'jsonwebtoken';
 
-export class UserController {
-  public user = Container.get(UserService);
+export class CustomersController {
+  public customer = Container.get(CustomerService);
 
-  public getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getCustomers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const findAllUsersData: User[] = await this.user.findAllUser();
+      const findAllCustomersData: Customer[] = await this.customer.findAllCustomer();
 
-      res.status(200).json({ data: findAllUsersData, message: 'findAll' });
+      res.status(200).json({ data: findAllCustomersData, message: 'findAll' });
     } catch (error) {
       next(error);
     }
   };
 
-  public getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getCustomerById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
-      const findOneUserData: User = await this.user.findUserById(userId);
-
-      res.status(200).json({ data: findOneUserData, message: 'findOne' });
+      const customerId = String(req.params.id);
+      const token = req.cookies['Authorization'];
+      if (token.id === customerId) {
+        const findOneCustomerData: Customer = await this.customer.findCustomerById(customerId);
+        res.status(200).json({ data: findOneCustomerData, message: 'findOne' });
+      } else {
+        res.status(401).json({
+          message: 'Unexpected token',
+        });
+      }
     } catch (error) {
       next(error);
     }
   };
 
-  public createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public createCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userData: User = req.body;
-      const createUserData: User = await this.user.createUser(userData);
+      const customerData: Customer = req.body;
+      const createCustomerData: Customer = await this.customer.createCustomer(customerData);
 
-      res.status(201).json({ data: createUserData, message: 'created' });
+      res.status(201).json({ data: createCustomerData, message: 'created' });
     } catch (error) {
       next(error);
     }
   };
 
-  public updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public updateCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
-      const userData: User = req.body;
-      const updateUserData: User[] = await this.user.updateUser(userId, userData);
+      const customerId = Number(req.params.id);
+      const customerData: Customer = req.body;
+      const updateCustomerData: Customer[] = await this.customer.updateCustomer(customerId, customerData);
 
-      res.status(200).json({ data: updateUserData, message: 'updated' });
+      res.status(200).json({ data: updateCustomerData, message: 'updated' });
     } catch (error) {
       next(error);
     }
   };
 
-  public deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public deleteCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
-      const deleteUserData: User[] = await this.user.deleteUser(userId);
-
-      res.status(200).json({ data: deleteUserData, message: 'deleted' });
+      const cookie = req.cookies['Authorization'];
+      const customerId2 = req.params.id;
+      const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
+      const customerId = decodedToken.id;
+      if (customerId !== customerId2) {
+        res.status(401).json({
+          message: `Unexpected token`,
+        });
+        return;
+      }
+      const deleteCustomerData: boolean = await this.customer.deleteCustomer(customerId);
+      res.status(200).json({ data: deleteCustomerData, message: 'deleted' });
     } catch (error) {
       next(error);
     }
