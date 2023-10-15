@@ -12,6 +12,7 @@ import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS } from '@config';
 import { Routes } from '@interfaces/routes.interface';
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
+import fileupload from 'express-fileupload';
 
 export class App {
   public app: express.Application;
@@ -49,6 +50,7 @@ export class App {
     this.app.use(helmet());
     this.app.use(compression());
     this.app.use(express.json());
+    this.app.use(fileupload());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
   }

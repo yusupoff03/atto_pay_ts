@@ -20,10 +20,25 @@ export class CurrencyService {
     }
     const newName = name || rows[0].name;
     const newAbbreviation = abbreviation || rows[0].abbreviation;
-    const { currency } = await pg.query(`UPDATE currency SET name=$1,abbbreviation=$2 where id=$3 RETURNING *`, [id, newName, newAbbreviation]);
+    const { rows: currency } = await pg.query(`UPDATE currency SET name=$1,abbbreviation=$2 where id=$3 RETURNING *`, [id, newName, newAbbreviation]);
     if (currency[0].exists) {
       return currency[0];
     }
     throw new HttpException(500, 'Database error');
+  }
+  public async deleteCurrency(id: string) {
+    const { rows } = await pg.query(`Select * from currency where id=$1`, [id]);
+    if (!rows[0].exists) {
+      throw new HttpException(404, 'Currency not found');
+    }
+    pg.query(`delete from currency where id=$1`, [id]);
+    return true;
+  }
+  public async getCurrencyById(id: string) {
+    const { rows } = await pg.query(`Select * from currency where id=$1`, [id]);
+    if (!rows[0].exists) {
+      throw new HttpException(404, 'Currency not found');
+    }
+    return rows[0];
   }
 }

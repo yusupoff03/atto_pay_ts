@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
-import { Customer } from '@interfaces/customers.interface';
+import { Customer, UpdateCustomerData } from '@interfaces/customers.interface';
 import { CustomerService } from '@services/customers.service';
 import { DataStoredInToken } from '@interfaces/auth.interface';
-import { SECRET_KEY } from '@config';
+import { POSTGRES_DB, SECRET_KEY } from '@config';
 import { verify } from 'jsonwebtoken';
+import { FileUploader } from '@utils/imageStorage';
 
 export class CustomersController {
   public customer = Container.get(CustomerService);
@@ -21,16 +22,10 @@ export class CustomersController {
 
   public getCustomerById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const customerId = String(req.params.id);
-      const token = req.cookies['Authorization'];
-      if (token.id === customerId) {
-        const findOneCustomerData: Customer = await this.customer.findCustomerById(customerId);
-        res.status(200).json({ data: findOneCustomerData, message: 'findOne' });
-      } else {
-        res.status(401).json({
-          message: 'Unexpected token',
-        });
-      }
+      const customerId = this.getCustomerId(req);
+      const findOneCustomerData: Customer = await this.customer.findCustomerById(customerId);
+      findOneCustomerData.photo_url = FileUploader.getUrl(findOneCustomerData.photo_url);
+      res.status(200).json({ data: findOneCustomerData, message: 'findOne' });
     } catch (error) {
       next(error);
     }
@@ -49,10 +44,10 @@ export class CustomersController {
 
   public updateCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const customerId = Number(req.params.id);
-      const customerData: Customer = req.body;
-      const updateCustomerData: Customer[] = await this.customer.updateCustomer(customerId, customerData);
-
+      console.log('Update');
+      const customerData: UpdateCustomerData = req.body;
+      const customerId = this.getCustomerId(req);
+      const updateCustomerData: Customer = await this.customer.updateCustomer(customerId, customerData, req.files?.image);
       res.status(200).json({ data: updateCustomerData, message: 'updated' });
     } catch (error) {
       next(error);
@@ -62,9 +57,10 @@ export class CustomersController {
   public deleteCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const cookie = req.cookies['Authorization'];
-      const customerId2 = req.params.id;
+      const { customerId } = req.body;
+      console.log(customerId);
       const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
-      const customerId = decodedToken.id;
+      const customerId2 = decodedToken.id;
       if (customerId !== customerId2) {
         res.status(401).json({
           message: `Unexpected token`,
@@ -76,5 +72,22 @@ export class CustomersController {
     } catch (error) {
       next(error);
     }
+  };
+  public getOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { phone } = req.body;
+      console.log(phone);
+      const otp = await this.customer.getOtp(phone);
+      res.status(200).json({
+        otp: otp,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  private getCustomerId = (req: Request): string => {
+    const cookie = req.cookies['Authorization'];
+    const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
+    return decodedToken.id;
   };
 }

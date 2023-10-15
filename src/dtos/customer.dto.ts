@@ -13,10 +13,15 @@ export class CreateCustomerDto {
 
 export class UpdateCustomerDto {
   @IsString()
-  public name: string;
+  public name?: string;
   @IsString()
   @IsNotEmpty()
-  @MinLength(9)
-  @MaxLength(32)
-  public password: string;
+  public password?: string;
+  public image?: any;
+  public deleteImage?: boolean;
+}
+export class CustomerLoginDto {
+  public phone: string;
+  public password?: string;
+  public otp?: string;
 }

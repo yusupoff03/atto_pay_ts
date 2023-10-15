@@ -16,12 +16,12 @@ export class CardsService {
     if (rows[0].exists) {
       throw new HttpException(409, `This card ${pan} already exists`);
     }
-    const { card } = await pg.query(
+    const { rows: cardRows } = await pg.query(
       `INSERT INTO customer_card(name, pan, expiry_month, expiry_year, customer_id)
        values ($1, $2, $3, $4, $5) returning name pan expiry_month,expiry_year`,
       [name, pan, expiry_month, expiry_year, customerId],
     );
-    return card[0];
+    return cardRows[0];
   }
 
   public async getCustomerCards(customerId: string) {

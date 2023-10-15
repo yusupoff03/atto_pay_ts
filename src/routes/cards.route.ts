@@ -13,7 +13,7 @@ export class CardsRoute implements Routes {
   }
   private initializeRoutes() {
     this.router.post(`${this.path}`, ValidationMiddleware(CreateCardDto), this.cards.createCard);
-    this.router.get(`${this.path}`, this.cards.getCustomerCards);
+    this.router.get(`${this.path}/:id`, this.cards.getCustomerCards);
     this.router.delete(`${this.path}`, this.cards.deleteCard);
     this.router.put(`${this.path}`, ValidationMiddleware(CardUpdateDto), this.cards.updateCard);
   }
