@@ -6,7 +6,7 @@ export class CreateCustomerDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(9)
+  @MinLength(6)
   @MaxLength(32)
   public password: string;
 }

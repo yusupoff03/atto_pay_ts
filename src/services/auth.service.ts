@@ -34,7 +34,7 @@ export class AuthService {
   constructor() {
     this.redis = new RedisClient();
   }
-  public async signup(customerData: Customer, uid?: string, trust: boolean): Promise<{ customer: Customer; cookie: string }> {
+  public async signup(customerData: Customer, trust: boolean, uid?: string): Promise<{ customer: Customer; cookie: string; token: string }> {
     const { name, phone, password } = customerData;
     const { rows: findCustomer } = await pg.query(
       `
@@ -45,7 +45,7 @@ export class AuthService {
                  )`,
       [phone],
     );
-    if (findCustomer[0].exists) throw new HttpException(409, `This phone ${customerData.phone} already exists`);
+    if (findCustomer[0].exists) throw new CustomError('NUMBER_TAKEN');
 
     const hashedPassword = await hash(password, 10);
     const { rows: signUpCustomerData } = await pg.query(
@@ -59,6 +59,7 @@ export class AuthService {
       [name, phone, hashedPassword],
     );
     if (uid && trust) {
+      console.log(uid);
       pg.query(
         `INSERT INTO customer_device(customer_id, device_id)
          values ($1, $2)`,
@@ -66,114 +67,107 @@ export class AuthService {
       );
     }
     const tokenData = createToken(signUpCustomerData[0]);
+    const token = tokenData.token;
     const cookie = createCookie(tokenData);
-    return { customer: signUpCustomerData[0], cookie };
+    return { customer: signUpCustomerData[0], cookie, token };
   }
 
-  public async login(CustomerData: CustomerLogin, deviceId: any): Promise<{ cookie: string; findCustomer: Customer }> {
-    try {
-      let customerStatus: { is_blocked: boolean; last_login_attempt; safe_login_after: number };
-      const { phone, password, trust, otp } = CustomerData;
-      const newTrust = trust || false;
+  public async login(CustomerData: CustomerLogin, deviceId: any): Promise<{ tokenData: TokenData; findCustomer: any }> {
+    let customerStatus: { is_blocked?: boolean; last_login_attempt?: moment.Moment | null; safe_login_after?: number | null } = {};
 
-      const { rows, rowCount } = await pg.query(
-        `
+    const { phone, password, trust, otp } = CustomerData;
+    const newTrust = trust || false;
+
+    const { rows, rowCount } = await pg.query(
+      `
         SELECT "id",
                "phone",
                "hashed_password"
         FROM customer
         WHERE "phone" = $1
       `,
-        [phone],
-      );
-      if (!rowCount) {
-        throw new CustomError('USER_NOT_FOUND');
-      }
+      [phone],
+    );
 
-      // Use `await` when working with Redis
-      const customerStatusResult = await this.redis.hGet('customer_status', phone);
-      if (customerStatusResult) {
-        customerStatus = JSON.parse(customerStatusResult);
+    if (!rowCount) {
+      throw new CustomError('USER_NOT_FOUND');
+    }
+
+    const customerStatusResult = await this.redis.hGet('customer_status', phone);
+
+    if (customerStatusResult) {
+      customerStatus = JSON.parse(customerStatusResult);
+
+      if (customerStatus.is_blocked) {
+        const unBlockTime = moment(customerStatus.last_login_attempt).add(1, 'minute');
+
+        if (moment().isBefore(unBlockTime)) {
+          const timeLeft = unBlockTime.diff(moment(), 'seconds');
+          console.log(timeLeft);
+          throw new CustomError('USER_BLOCKED', null, timeLeft);
+        }
+
+        customerStatus.is_blocked = false;
+        customerStatus.last_login_attempt = null; // Set to null since it's not a Moment object anymore
+      }
+    }
+
+    const deviceResult = await pg.query(`Select * from customer_device where device_id= $1 and customer_id = $2`, [deviceId, rows[0].id]);
+
+    const loginType = deviceResult.rows.length > 0 ? 'otp' : 'password';
+
+    if (loginType === 'password') {
+      const isCorrect = bcrypt.compareSync(password, rows[0].hashed_password);
+
+      if (!isCorrect) {
+        if (
+          customerStatus.last_login_attempt &&
+          moment().isBefore(moment(customerStatus.last_login_attempt).add(customerStatus.safe_login_after, 'seconds'))
+        ) {
+          customerStatus.is_blocked = true;
+          customerStatus.safe_login_after = 0;
+        } else {
+          customerStatus.safe_login_after = customerStatus.last_login_attempt
+            ? Math.max(60 - moment().diff(customerStatus.last_login_attempt, 'seconds'), 0)
+            : 0;
+        }
+
+        customerStatus.last_login_attempt = moment();
+        await this.redis.hSet('customer_status', phone, JSON.stringify(customerStatus));
 
         if (customerStatus.is_blocked) {
-          const unBlockTime = moment(customerStatus.last_login_attempt).add(1, 'minute');
-
-          if (moment().isBefore(unBlockTime)) {
-            const timeLeft = unBlockTime.diff(moment(), 'seconds');
-            throw new HttpException(403, `User is blocked, try again after ${timeLeft} seconds`);
-          }
-
-          customerStatus.is_blocked = false;
-          customerStatus.last_login_attempt = false;
-        }
-      }
-      console.log(deviceId, rows[0].id);
-      // Use `await` when querying the database
-      const deviceResult = await pg.query(`Select * from customer_device where device_id= $1 and customer_id = $2`, [deviceId, rows[0].id]);
-
-      const loginType = deviceResult.rows.length > 0 ? 'otp' : 'password';
-      /* Validator password and otp */
-      if (loginType === 'password') {
-        console.log(loginType);
-        const isCorrect = bcrypt.compareSync(password, rows[0].hashed_password);
-        if (!isCorrect) {
-          if (
-            customerStatus.last_login_attempt &&
-            moment().isBefore(moment(customerStatus.last_login_attempt).add(customerStatus.safe_login_after, 'seconds'))
-          ) {
-            customerStatus.is_blocked = true;
-            customerStatus.safe_login_after = 0;
-          } else {
-            customerStatus.safe_login_after = customerStatus.last_login_attempt
-              ? Math.max(60 - moment().diff(customerStatus.last_login_attempt, 'seconds'), 0)
-              : 0;
-          }
-          customerStatus.last_login_attempt = moment();
-
-          // Use `await` when working with Redis
-          await this.redis.hSet('customer_status', phone, JSON.stringify(customerStatus));
-
-          if (customerStatus.is_blocked) {
-            throw new HttpException(403, `User is blocked, try again after ${60} seconds`);
-          } else {
-            throw new HttpException(404, 'WRONG_PASSWORD');
-          }
-        }
-      } else {
-        // Use `await` when working with Redis
-        const redisOtp = await this.redis.hGet('otp', phone);
-
-        if (!redisOtp) {
-          return;
-        }
-
-        const otpObject = JSON.parse(redisOtp);
-
-        if (moment().isAfter(otpObject.expiresAt)) {
-          // Use `await` when working with Redis
-          await this.redis.hDel('otp', phone);
-          throw new HttpException(401, 'EXPIRED_OTP');
-        }
-
-        if (otpObject.code === parseInt(otp) && moment().isBefore(otpObject.expiresAt)) {
-          // Use `await` when working with Redis
-          await this.redis.hDel('otp', phone);
+          throw new CustomError('USER_BLOCKED');
         } else {
-          return;
+          throw new CustomError('WRONG_PASSWORD');
         }
       }
+    } else {
+      const redisOtp = await this.redis.hGet('otp', phone);
 
-      if (newTrust) {
-        // Use `await` when querying the database
-        await pg.query(`Insert into customer_device(customer_id, device_id) values ($1,$2)`, [rows[0].id, deviceId]);
+      if (!redisOtp) {
+        return;
       }
 
-      const tokenData = createToken(rows[0]);
-      const cookie = createCookie(tokenData);
-      return { cookie, findCustomer: rows[0] };
-    } catch (error) {
-      throw new CustomError(error.name); // Handle and log the error properly
+      const otpObject = JSON.parse(redisOtp);
+
+      if (moment().isAfter(otpObject.expiresAt)) {
+        await this.redis.hDel('otp', phone);
+        throw new CustomError('EXPIRED_OTP');
+      }
+
+      if (otpObject.code === parseInt(otp) && moment().isBefore(otpObject.expiresAt)) {
+        await this.redis.hDel('otp', phone);
+      } else {
+        return;
+      }
     }
+
+    if (newTrust) {
+      await pg.query(`Insert into customer_device(customer_id, device_id) values ($1,$2)`, [rows[0].id, deviceId]);
+    }
+
+    const tokenData: TokenData = createToken(rows[0]); // Replace with your token creation logic
+    return { tokenData, findCustomer: rows[0] };
   }
 
   public async getLoginType(phone: string, deviceId?: string) {
@@ -183,8 +177,10 @@ export class AuthService {
                                      where phone = $1`,
       [phone],
     );
-    if (rows[0].exists) throw new HttpException(404, 'User not found');
-    if (!deviceId) return { password: true, otp: false };
+    if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
+    if (!deviceId) {
+      return { password: true, otp: false };
+    }
 
     const { rows: customerPhone } = await pg.query(
       `Select *
@@ -219,7 +215,7 @@ export class AuthService {
     return rows[0];
   }
 
-  public async signUpMerchant(merchant: Merchant): Promise<{ merchant: Merchant; cookie: string }> {
+  public async signUpMerchant(merchant: Merchant): Promise<{ tokenData: TokenData; cookie: string; merchant: any }> {
     const { name, email, password } = merchant;
     const { rows: findMerchant } = await pg.query(
       `
@@ -230,7 +226,7 @@ export class AuthService {
                  )`,
       [email],
     );
-    if (findMerchant[0].exists) throw new HttpException(409, `This phone ${merchant.email} already exists`);
+    if (findMerchant[0].exists) throw new CustomError('EMAIL_TAKEN');
 
     const hashedPassword = await hash(password, 10);
     const { rows: signMerchantData } = await pg.query(
@@ -245,10 +241,10 @@ export class AuthService {
     );
     const tokenData = createTokenMerchant(signMerchantData[0]);
     const cookie = createCookie(tokenData);
-    return { merchant: signMerchantData[0], cookie };
+    return { merchant: signMerchantData[0], tokenData, cookie };
   }
 
-  public async loginMerchant(merchant: Merchant): Promise<{ merchant: Merchant; cookie: string }> {
+  public async loginMerchant(merchant: Merchant): Promise<{ cookie: string; tokenData: TokenData; merchant: any }> {
     const { email, password } = merchant;
     const { rows, rowCount } = await pg.query(
       `
@@ -260,12 +256,12 @@ export class AuthService {
       `,
       [email],
     );
-    if (!rowCount) throw new HttpException(409, `This phone ${email} was not found`);
+    if (!rowCount) throw new CustomError('USER_NOT_FOUND');
 
     const isPasswordMatching: boolean = await compare(password, rows[0].hashed_password);
-    if (!isPasswordMatching) throw new HttpException(409, 'Your password not matching');
+    if (!isPasswordMatching) throw new CustomError('WRONG_PASSWORD');
     const tokenData = createTokenMerchant(rows[0]);
     const cookie = createCookie(tokenData);
-    return { merchant: rows[0], cookie };
+    return { merchant: rows[0], cookie, tokenData };
   }
 }

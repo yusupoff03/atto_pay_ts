@@ -13,10 +13,10 @@ export class MerchantController {
   public getMerchantProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);
-      const merchantData: Merchant = await this.merchant.getMerchantById(merchantId);
-      res.status(200).json({
-        data: merchantData,
-      });
+      console.log(merchantId);
+      const merchant: Merchant = await this.merchant.getMerchantById(merchantId);
+      delete merchant.hashed_password;
+      res.status(200).json(merchant);
     } catch (error) {
       next(error);
     }
@@ -33,10 +33,22 @@ export class MerchantController {
       next(error);
     }
   };
+  public updateMerchantLang = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const merchantId = await this.getMerchantId(req);
+      const { lang } = req.body;
+      await this.merchant.updateMerchantLang(merchantId, lang);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
 
   private getMerchantId = async (req: Request): Promise<string> => {
-    const cookie = req.cookies['Authorization'];
-    const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
+    const token: string = req.headers.authorization;
+    console.log(token);
+    // const token: string = cookie.replace(/"/g, '');
+    const decodedToken = verify(token, SECRET_KEY) as DataStoredInToken;
     if (decodedToken.role) {
       return String(decodedToken.id);
     }

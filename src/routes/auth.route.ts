@@ -18,8 +18,8 @@ export class AuthRoute implements Routes {
     // this.router.post('/register', ValidationMiddleware(CreateCustomerDto), this.auth.signUp);
     // this.router.post('/login', ValidationMiddleware(CreateCustomerDto), this.auth.logIn);
     this.router.delete('/logout', AuthMiddleware, this.auth.logOut);
-    this.router.post('/merchant/signup', this.auth.signUpMerchant);
-    this.router.post('/merchant/login', this.auth.loginMerchant);
+    // this.router.post('/merchant/signup', this.auth.signUpMerchant);
+    // this.router.post('/merchant/login', this.auth.loginMerchant);
     this.router.get('/get-logintype', this.auth.getCustomerLoginType);
   }
 }

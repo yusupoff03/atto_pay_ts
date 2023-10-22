@@ -3,13 +3,16 @@ export interface Customer {
   name: string;
   trust?: boolean;
   phone: string;
-  photo_url?: string;
+  image_url?: string;
   password?: string;
   hashed_password?: string;
+  balance?: number;
 }
 export interface UpdateCustomerData {
   name: string;
-  password: string;
+  password?: string;
+  gender: string;
+  birthDate: string;
   deleteImage?: boolean | false;
 }
 

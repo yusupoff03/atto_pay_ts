@@ -23,32 +23,54 @@ export class CustomersController {
   public getCustomerById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerId = this.getCustomerId(req);
-      const findOneCustomerData: Customer = await this.customer.findCustomerById(customerId);
-      findOneCustomerData.photo_url = FileUploader.getUrl(findOneCustomerData.photo_url);
-      res.status(200).json({ data: findOneCustomerData, message: 'findOne' });
+      const customer: Customer = await this.customer.findCustomerById(customerId);
+      customer.image_url = FileUploader.getUrl(customer.image_url);
+      res.status(200).json(customer);
     } catch (error) {
       next(error);
     }
   };
-
-  public createCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public addServiceToSaved = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const customerData: Customer = req.body;
-      const createCustomerData: Customer = await this.customer.createCustomer(customerData);
-
-      res.status(201).json({ data: createCustomerData, message: 'created' });
+      const customerId = this.getCustomerId(req);
+      const { serviceId } = req.body;
+      await this.customer.addToSaved(customerId, serviceId);
+      res.status(200).json({
+        success: true,
+      });
     } catch (error) {
       next(error);
     }
   };
-
+  public deleteServiceFromSaved = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const customerId = this.getCustomerId(req);
+      const { serviceId } = req.body;
+      await this.customer.deleteFromSaved(customerId, serviceId);
+      res.status(200).json({
+        success: true,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
   public updateCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      console.log('Update');
       const customerData: UpdateCustomerData = req.body;
+      console.log(req.body);
       const customerId = this.getCustomerId(req);
-      const updateCustomerData: Customer = await this.customer.updateCustomer(customerId, customerData, req.files?.image);
+      const updateCustomerData: Customer = await this.customer.updateCustomer(customerId, customerData, req.files?.avatar);
       res.status(200).json({ data: updateCustomerData, message: 'updated' });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public updateCustomerLang = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const customerId = this.getCustomerId(req);
+      const { lang } = req.body;
+      await this.customer.updateCustomerLang(customerId, lang);
+      res.status(200).json({ success: true });
     } catch (error) {
       next(error);
     }
@@ -76,7 +98,6 @@ export class CustomersController {
   public getOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { phone } = req.body;
-      console.log(phone);
       const otp = await this.customer.getOtp(phone);
       res.status(200).json({
         otp: otp,
@@ -86,7 +107,7 @@ export class CustomersController {
     }
   };
   private getCustomerId = (req: Request): string => {
-    const cookie = req.cookies['Authorization'];
+    const cookie = req.headers.authorization;
     const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
     return decodedToken.id;
   };

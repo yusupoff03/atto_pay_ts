@@ -17,12 +17,14 @@ export class CustomersRoute implements Routes {
   }
 
   private initializeRoutes() {
-    // this.router.get(`${this.path}/all`, this.customer.getCustomers);
-    this.router.get(`${this.path}/profile`, AuthMiddleware, this.customer.getCustomerById);
+    this.router.get(`${this.path}/profile`, this.customer.getCustomerById);
     this.router.post(`${this.path}/register`, ValidationMiddleware(CreateCustomerDto), this.auth.signUp);
+    this.router.post(`${this.path}/services`, AuthMiddleware, this.customer.addServiceToSaved);
+    this.router.delete(`${this.path}/services`, AuthMiddleware, this.customer.deleteServiceFromSaved);
     this.router.post(`${this.path}/login`, ValidationMiddleware(CustomerLoginDto), this.auth.logIn);
     this.router.post(`${this.path}/getlogin`, this.auth.getCustomerLoginType);
     this.router.put(`${this.path}/profile`, AuthMiddleware, this.customer.updateCustomer);
+    this.router.put(`${this.path}/lang`, AuthMiddleware, this.customer.updateCustomerLang);
     this.router.delete(`${this.path}/delete`, AuthMiddleware, this.customer.deleteCustomer);
     this.router.get(`${this.path}/get-otp`, this.customer.getOtp);
   }

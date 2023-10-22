@@ -14,6 +14,7 @@ export class CreateCardDto {
   @IsNotEmpty()
   @IsString()
   public expiry_year: string;
+  public owner_name: string;
 }
 export class CardUpdateDto {
   id: string;

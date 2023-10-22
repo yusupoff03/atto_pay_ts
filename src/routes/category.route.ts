@@ -3,7 +3,7 @@ import { Routes } from '@interfaces/routes.interface';
 import { CategoryController } from '@controllers/category.controller';
 
 export class CategoryRoute implements Routes {
-  path: '/category';
+  path = '/category';
   router = Router();
   public category = new CategoryController();
   constructor() {

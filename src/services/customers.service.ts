@@ -5,6 +5,7 @@ import { HttpException } from '@exceptions/httpException';
 import { Customer, UpdateCustomerData } from '@interfaces/customers.interface';
 import { FileUploader } from '@utils/imageStorage';
 import { RedisClient } from '@/database/redis';
+import { CustomError } from '@exceptions/CustomError';
 
 @Service()
 export class CustomerService {
@@ -29,37 +30,17 @@ export class CustomerService {
       `,
       [customerId],
     );
-    if (!rowCount) throw new HttpException(409, "Customer doesn't exist");
-    return rows[0];
+    if (!rowCount) throw new CustomError('USER_NOT_FOUND');
+    const { rows: cards } = await pg.query(`Select sum(balance) from customer_card where customer_id =$1`, [customerId]);
+    // let balance = 0;
+    // if (cards[0]) {
+    //   balance = cards[0].sum;
+    // }
+    const customer: Customer = rows[0];
+    customer.balance = cards[0].sum;
+    console.log(customer.balance);
+    return customer;
   }
-
-  public async createCustomer(customerData: Customer): Promise<Customer> {
-    const { phone, password } = customerData;
-
-    const { rows } = await pg.query(
-      `
-        SELECT EXISTS(
-                 SELECT "phone"
-                 FROM customer
-                 WHERE "phone" = $1
-                 )`,
-      [phone],
-    );
-    if (rows[0].exists) throw new HttpException(409, `This phone ${phone} already exists`);
-
-    const hashedPassword = await hash(password, 10);
-    const { rows: createCustomerData } = await pg.query(
-      `
-        INSERT INTO customer("phone",
-                             "password")
-        VALUES ($1, $2) RETURNING "phone", "password"
-      `,
-      [phone, hashedPassword],
-    );
-
-    return createCustomerData[0];
-  }
-
   public async updateCustomer(customerId: string, customerData: UpdateCustomerData, image: any): Promise<Customer> {
     const { rows: findCustomer } = await pg.query(
       `
@@ -68,36 +49,39 @@ export class CustomerService {
                  WHERE "id" = $1`,
       [customerId],
     );
-    if (!findCustomer[0]) throw new HttpException(409, "Customer doesn't exist");
+    if (!findCustomer[0]) throw new CustomError('USER_NOT_FOUND');
     const name = customerData.name;
-    console.log(findCustomer[0]);
     const password = customerData.password;
     const deleteImage = customerData.deleteImage;
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = password ? await hash(password, 10) : findCustomer[0].password;
     const newName = name || findCustomer[0].name;
     const newPassword = hashedPassword || findCustomer[0].hashed_password;
+    const gender = customerData.gender || findCustomer[0].gender;
+    const birthDate = customerData.birthDate || findCustomer[0].birthDate;
     const { rows: updateCustomerData } = await pg.query(
       `
         UPDATE
           customer
         SET "name"    = $2,
-            "hashed_password" = $3
+            "hashed_password" = $3,
+            "gender"= $4,
+            "birth_date"=$5
         WHERE "id" = $1 RETURNING *
       `,
-      [customerId, newName, newPassword],
+      [customerId, newName, newPassword, gender, birthDate],
     );
     const fileUploader = new FileUploader('eu-north-1', 'image-24');
     if (deleteImage) {
-      await pg.query(`Update customer set photo_url = $1 where id = $2`, [null, customerId]);
-      await fileUploader.deleteFile(findCustomer[0].photo_url);
+      await pg.query(`Update customer set image_url = $1 where id = $2`, [null, customerId]);
+      await fileUploader.deleteFile(findCustomer[0].image_url);
     }
     if (image) {
-      await fileUploader.deleteFile(findCustomer[0].photo_url);
+      await fileUploader.deleteFile(findCustomer[0].image_url);
       const objectKey = `${customerId}.${image.name.split('.').pop()}`;
       const uploadPath = await fileUploader.uploadFile(image, objectKey);
-      console.log(uploadPath);
-      const { rows: updateCustomer } = await pg.query(`Update customer set photo_url = $1 where id= $2 returning *`, [uploadPath, customerId]);
-      if (updateCustomer[0].exists) {
+      const { rows: updateCustomer } = await pg.query(`Update customer set image_url = $1 where id= $2 returning *`, [uploadPath, customerId]);
+      if (updateCustomer[0]) {
+        updateCustomer[0].image_url = uploadPath;
         return updateCustomer[0];
       }
     }
@@ -141,5 +125,28 @@ export class CustomerService {
       return JSON.parse(otp).code.toString();
     });
     throw new HttpException(404, 'Not found');
+  }
+  public async addToSaved(customerId: string, serviceId: any): Promise<void> {
+    await pg.query(
+      `
+insert into customer_saved_service(customer_id, service_id)
+values($1, $2)
+on conflict do nothing`,
+      [customerId, serviceId],
+    );
+  }
+  public async deleteFromSaved(customerId: string, serviceId: any): Promise<void> {
+    const { rows } = await pg.query(`Select * from customer_saved_service where service_id =$1 and customer_id = $2`, [serviceId, customerId]);
+    if (!rows[0]) {
+      throw new CustomError('SERVICE_NOT_FOUND');
+    }
+    await pg.query(`delete from customer_saved_service where customer_id  =$1 and service_id =$2`, [customerId, serviceId]);
+  }
+  async updateCustomerLang(customerId: string, lang: string): Promise<boolean> {
+    const { rows } = await pg.query(`Select * from customer where id = $1`, [customerId]);
+    if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
+
+    await pg.query(`Update customer set lang = $1 where id = $2`, [lang, customerId]);
+    return true;
   }
 }

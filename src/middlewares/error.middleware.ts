@@ -14,14 +14,21 @@ export const ErrorMiddleware = async (error: HttpException | CustomError, req: R
        WHERE name = $1`,
       [error.name.toUpperCase(), lang],
     );
-
     const status: number = errorObject[0]?.http_code || 500;
-    const message: string = errorObject[0]?.message || 'Something went wrong';
-    const info = error.info;
+    let message: string = errorObject[0]?.message || 'Something went wrong';
+    let info = error.info;
     const type = error.name;
     const details = isDevenv ? error.message : undefined;
     const stack = isDevenv ? error.stack : undefined;
-    console.log(errorObject[0]);
+
+    switch (error.name) {
+      case 'USER_BLOCKED': {
+        if (errorObject) {
+          info = { ...info, message: errorObject[0].message };
+          message = errorObject[0].message.replace('{0}', error.info?.toString() || '60');
+        }
+      }
+    }
     logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}`);
     res.status(status).json({ message, status, info, type, details, stack });
   } catch (err) {

@@ -12,11 +12,11 @@ export class AuthController {
   public signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerData: Customer = req.body;
-      const trust: boolean = req.body;
+      const trust: boolean = req.body.trust || false;
       const uid: string = req.headers['x-device-id'] as string;
-      const { cookie, customer } = await this.auth.signup(customerData, uid, trust);
+      const { cookie, token, customer } = await this.auth.signup(customerData, trust, uid);
       res.setHeader('Set-Cookie', [cookie]);
-      res.status(201).json({ data: customer, message: 'signup' });
+      res.status(201).json({ token: token, data: customer, message: 'signup' });
     } catch (error) {
       next(error);
     }
@@ -26,10 +26,8 @@ export class AuthController {
     try {
       const customerData: CustomerLogin = req.body;
       const deviceId: string = req.headers['x-device-id'] as string;
-      const { cookie, findCustomer } = await this.auth.login(customerData, deviceId);
-
-      res.setHeader('Set-Cookie', [cookie]);
-      res.status(200).json({ data: findCustomer, message: 'login' });
+      const { tokenData, findCustomer } = await this.auth.login(customerData, deviceId);
+      res.status(200).json({ token: tokenData.token, data: findCustomer, message: 'login' });
     } catch (error) {
       next(error);
     }
@@ -55,7 +53,6 @@ export class AuthController {
     try {
       const customerData: Customer = req.customer;
       const logOutCustomerData: Customer = await this.auth.logout(customerData);
-      res.setHeader('Set-Cookie', ['Authorization=; Max-age=0']);
       res.status(200).json({ data: logOutCustomerData, message: 'logout' });
     } catch (error) {
       next(error);
@@ -64,11 +61,9 @@ export class AuthController {
   public signUpMerchant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantData: Merchant = req.body;
-      const { cookie, merchant } = await this.auth.signUpMerchant(merchantData);
+      const { cookie, tokenData, merchant } = await this.auth.signUpMerchant(merchantData);
       res.setHeader('Set-Cookie', [cookie]);
-      res.status(201).json({
-        data: merchant,
-      });
+      res.status(201).json({ token: tokenData.token, data: merchant });
     } catch (error) {
       next(error);
     }
@@ -76,12 +71,9 @@ export class AuthController {
   public loginMerchant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantData: Merchant = req.body;
-      const { merchant, cookie } = await this.auth.loginMerchant(merchantData);
-
+      const { merchant, cookie, tokenData } = await this.auth.loginMerchant(merchantData);
       res.setHeader('Set-Cookie', cookie);
-      res.status(200).json({
-        merchant: merchant,
-      });
+      res.status(200).json({ token: tokenData.token, merchant: merchant });
     } catch (error) {
       next(error);
     }
