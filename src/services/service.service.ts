@@ -9,7 +9,7 @@ export class ServiceService {
   constructor() {
     this.fileUploader = new FileUploader('eu-north-1', 'image-24');
   }
-  public async createService(serviceData: ServiceInterface, image?: any, lang: any): Promise<ServiceInterface> {
+  public async createService(serviceData: ServiceInterface, lang: any, image?: any): Promise<ServiceInterface> {
     const { name, price, merchant_id, categoryId, isActive } = serviceData;
     const { rows } = await pg.query(`Select * from service where merchant_id=$1 and category_id=$2 and deleted = false`, [merchant_id, categoryId]);
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
