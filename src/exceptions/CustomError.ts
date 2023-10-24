@@ -5,6 +5,5 @@ export class CustomError extends Error {
     super(originalMessage || name);
     this.name = name;
     this.info = info || undefined; // Set 'info' explicitly as undefined if not provided
-    console.log('INfo' + info);
   }
 }

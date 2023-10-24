@@ -27,9 +27,11 @@ export class ServiceController {
     try {
       const merchantId = await this.getMerchantId(req);
       const serviceId = req.body.id;
-      await this.service.deleteOneById(merchantId, serviceId);
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = await this.service.deleteOneById(merchantId, serviceId, lang);
       res.status(200).json({
         success: true,
+        message,
       });
     } catch (error) {
       next(error);
@@ -39,10 +41,12 @@ export class ServiceController {
     try {
       const merchantId = await this.getMerchantId(req);
       const service: ServiceInterface = req.body;
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
       service.merchant_id = merchantId;
-      await this.service.createService(service, req.files?.image);
+      const message = await this.service.createService(service, req.files?.image, lang);
       res.status(201).json({
         success: true,
+        message,
       });
     } catch (error) {
       next(error);

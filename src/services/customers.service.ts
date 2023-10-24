@@ -32,13 +32,8 @@ export class CustomerService {
     );
     if (!rowCount) throw new CustomError('USER_NOT_FOUND');
     const { rows: cards } = await pg.query(`Select sum(balance) from customer_card where customer_id =$1`, [customerId]);
-    // let balance = 0;
-    // if (cards[0]) {
-    //   balance = cards[0].sum;
-    // }
     const customer: Customer = rows[0];
     customer.balance = cards[0].sum;
-    console.log(customer.balance);
     return customer;
   }
   public async updateCustomer(customerId: string, customerData: UpdateCustomerData, image: any): Promise<Customer> {

@@ -57,7 +57,6 @@ export class CustomersController {
   public updateCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerData: UpdateCustomerData = req.body;
-      console.log(req.body);
       const customerId = this.getCustomerId(req);
       const updateCustomerData: Customer = await this.customer.updateCustomer(customerId, customerData, req.files?.avatar);
       res.status(200).json({ data: updateCustomerData, message: 'updated' });

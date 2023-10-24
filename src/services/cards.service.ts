@@ -5,7 +5,7 @@ import { CustomError } from '@exceptions/CustomError';
 
 @Service()
 export class CardsService {
-  public async createCard(cardDto: CreateCardDto, customerId: string) {
+  public async createCard(cardDto: CreateCardDto, customerId: string, lang) {
     const name = cardDto.name;
     const pan = cardDto.pan;
     const owner_name = cardDto.owner_name;
@@ -13,8 +13,8 @@ export class CardsService {
     const expiry_year: string = cardDto.expiry_year;
     const { rows } = await pg.query(
       `Select *
-                                     from customer_card
-                                     where pan = $1`,
+from customer_card
+where pan = $1`,
       [pan],
     );
     if (rows[0]) {
@@ -22,10 +22,10 @@ export class CardsService {
     }
     const { rows: cardRows } = await pg.query(
       `INSERT INTO customer_card( customer_id,name, owner_name,pan, expiry_month, expiry_year)
-       values ($1, $2, $3, $4, $5,$6) returning *`,
+       values ($1, $2, $3, $4, $5,$6) returning (select message from message where name = 'CARD_ADDED')`,
       [customerId, name, owner_name, pan, expiry_month, expiry_year],
     );
-    return cardRows[0];
+    return cardRows[0].message[lang];
   }
 
   public async getCustomerCards(customerId: string) {
@@ -51,18 +51,16 @@ export class CardsService {
     return rows[0];
   }
   public async deleteCard(customerId: string, cardId: string) {
-    const { rows } = await pg.query(`Select *from customer_card where id=$1 and customer_id=$2`, [cardId, customerId]);
+    const { rows } = await pg.query(`Select * from customer_card where id=$1 and customer_id=$2`, [cardId, customerId]);
     console.log(cardId);
     console.log(customerId);
     if (!rows[0]) {
       throw new CustomError('CARD_NOT_FOUND');
     }
-    await pg.query(
-      `Delete
-                    from customer_card
-                    where id = $1`,
-      [cardId],
-    );
+    const { rows: error } = await pg.query('call delete_card($1,$2,null,null)', [cardId, customerId]);
+    if (error[0].error_code) {
+      throw new CustomError(error[0].error_code, error[0].error_message);
+    }
     return true;
   }
   public async getOneById(customerId: string, cardId: string) {

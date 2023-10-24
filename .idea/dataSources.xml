@@ -15,5 +15,19 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/atto_pay</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="verceldb@ep-nameless-disk-65881682-pooler.eu-central-1.postgres.vercel-storage.com" uuid="8d89f95a-9a39-4984-880c-fb968f4ef286">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ep-nameless-disk-65881682-pooler.eu-central-1.postgres.vercel-storage.com:5432/verceldb</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="atto_pay@ep-nameless-disk-65881682-pooler.eu-central-1.postgres.vercel-storage.com" uuid="30d53281-5536-45b0-8994-41de51111a30">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ep-nameless-disk-65881682-pooler.eu-central-1.postgres.vercel-storage.com:5432/atto_pay</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

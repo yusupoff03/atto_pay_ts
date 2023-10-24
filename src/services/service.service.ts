@@ -9,13 +9,13 @@ export class ServiceService {
   constructor() {
     this.fileUploader = new FileUploader('eu-north-1', 'image-24');
   }
-  public async createService(serviceData: ServiceInterface, image?: any): Promise<ServiceInterface> {
+  public async createService(serviceData: ServiceInterface, image?: any, lang: any): Promise<ServiceInterface> {
     const { name, price, merchant_id, categoryId, isActive } = serviceData;
     const { rows } = await pg.query(`Select * from service where merchant_id=$1 and category_id=$2 and deleted = false`, [merchant_id, categoryId]);
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
     const newActive = isActive || false;
     const { rows: service } = await pg.query(
-      `INSERT INTO service(name,price,merchant_id,category_id,is_active) values ($1,$2,$3,$4,$5) RETURNING *`,
+      `INSERT INTO service(name,price,merchant_id,category_id,is_active) values ($1,$2,$3,$4,$5) RETURNING (select message from message where name = 'SERVICE_CREATED')`,
       [name, price, merchant_id, categoryId, newActive],
     );
     if (image) {
@@ -23,8 +23,7 @@ export class ServiceService {
       if (uploadPath) await pg.query(`Update service set image_url = $1 where id = $2`, [uploadPath, service[0].id]);
     }
     if (service[0]) {
-      console.log(service[0]);
-      return service[0];
+      return service[0].message[lang];
     }
     throw new CustomError('DATABASE_ERROR');
   }
@@ -48,7 +47,7 @@ where merchant_id = $2 and deleted = false`,
     return services;
   }
   public async getAllServices(lang: any, customerId): Promise<ServiceInterface[]> {
-    let services: ServiceInterface[] = [];
+    const services: ServiceInterface[] = [];
     const { rows } = await pg.query(
       `select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url,
       c.code as category_code, c.name -> $1 as category_name
@@ -88,18 +87,19 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
     rows[0].image_url = FileUploader.getUrl(rows[0].image_url);
     return rows[0];
   }
-  public async deleteOneById(merchantId, serviceId): Promise<void> {
+  public async deleteOneById(merchantId, serviceId, lang): Promise<any> {
     const { rows } = await pg.query(`Select * from service where id = $1 and merchant_id = $2`, [serviceId, merchantId]);
     if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');
-    await pg.query(
+    const { rows: message } = await pg.query(
       `update service
                     set is_active = false,
                         deleted   = true
                     where id = $1
                       and merchant_id = $2
-                      and deleted = false returning id`,
+                      and deleted = false returning (select message from message where name = 'SERVICE_DELETED')`,
       [serviceId, merchantId],
     );
+    return message[lang];
   }
   public async updateService(merchantId, service: ServiceUpdate, image?: any): Promise<void> {
     const { rows } = await pg.query(`Select * from service where merchant_id = $1 and id = $2`, [merchantId, service.id]);

@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS customer cascade;
 DROP TABLE IF EXISTS customer_device cascade;
 DROP TABLE IF EXISTS merchant cascade;
 DROP TABLE IF EXISTS service cascade;
+DROP TABLE IF EXISTS message cascade;
 
 
 create table if not exists customer(
@@ -65,8 +66,7 @@ image_url varchar(256),
 is_active boolean not null default false,
 deleted boolean not null default false
 );
-create table if not exists error(
-id serial primary key,
+create table if not exists message(
 name varchar(64) not null unique,
 message jsonb not null,
 http_code int not null
@@ -88,10 +88,35 @@ receiver jsonb
 );
 create or replace function mask_credit_card(pan varchar(16))
 returns varchar(16) as $$
-  begin return concat(left(pan,4),'********',right(pan,4));
+  begin return concat(left(pan,6),'******',right(pan,4));
     end;
   $$ language plpgsql;
+create or replace procedure delete_card(
+  _card_id uuid,
+  _customer_id uuid,
+  out error_code varchar(64),
+  out error_message text
+) as $$
+begin
+  begin
+    delete from transactions where owner_id = _customer_id and (sender->>'id')::uuid = _card_id or (receiver->>'id')::uuid = _card_id;
 
+    delete from customer_card where id = _card_id and customer_id = _customer_id;
+    if not found then
+      error_code := 'CARD_NOT_FOUND';
+      return;
+    end if;
+  exception
+    when others then
+      rollback;
+      error_code := 'DATABASE_ERROR';
+      error_message := sqlerrm;
+      return;
+  end;
+
+  commit;
+end;
+$$ language plpgsql;
 create or replace procedure pay_for_service(
   _customer_id uuid,
   _card_id uuid,
@@ -237,7 +262,56 @@ end;
 commit;
   end;
     $$ language plpgsql;
-insert into error(name, message, http_code) values
+create or replace function get_transactions(
+  _customer_id uuid,
+  _from timestamp,
+  _to timestamp,
+  _card_id uuid default null,
+  _service_id uuid default null
+) returns table(
+id uuid,
+owner_id uuid,
+type varchar(16),
+action varchar(16),
+amount int,
+created_at timestamp,
+sender jsonb,
+receiver jsonb
+) as $$begin
+return query
+  select * from(
+                 -- expense transfer
+                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
+                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
+                        jsonb_build_object('name', receiver_customer.name, 'image_url', receiver_customer.image_url, 'pan', mask_credit_card(t.receiver->>'pan')) as receiver
+                 from transactions t
+                        join customer_card own_card on own_card.id = (t.sender->>'id')::uuid
+                        join customer receiver_customer on receiver_customer.id = (t.receiver->>'customer_id')::uuid
+                 where t.owner_id = _customer_id and t.created_at between _from and _to
+                 union all
+                 -- expense payment
+                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
+                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
+                        jsonb_build_object('id', s.id, 'name', s.name, 'image_url', s.image_url) as receiver
+                 from transactions t
+                        join customer_card own_card on own_card.id = (t.sender->>'id')::uuid
+                        join service s on s.id = (t.receiver->>'id')::uuid
+                 where t.owner_id = _customer_id and t.created_at between _from and _to
+                 union all
+                 -- income transfer
+                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
+                        jsonb_build_object('name', sender_customer.name, 'image_url', sender_customer.image_url, 'pan', mask_credit_card(t.sender->>'pan')) as sender,
+                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as receiver
+                 from transactions t
+                        join customer sender_customer on sender_customer.id = (t.sender->>'customer_id')::uuid
+                        join customer_card own_card on own_card.id = (t.receiver->>'id')::uuid
+                 where t.owner_id = _customer_id and t.created_at between _from and _to
+ ) as transactions
+  where (_card_id is null or (transactions.sender->>'id')::uuid = _card_id or (transactions.receiver->>'id')::uuid = _card_id)
+  and (_service_id is null or (transactions.receiver->>'id')::uuid = _service_id );
+end;
+$$ language plpgsql;
+insert into message(name, message, http_code) values
 ('VALIDATION_ERROR', '{"en": "Invalid input for {0}", "uz": "{0} uchun notog''ri kiritish", "ru": "Неверный ввод для {0}"}', 400),
 ('DATABASE_ERROR', '{"en": "Database error", "uz": "Ma''lumotlar bazasi xatosi", "ru": "Ошибка базы данных"}', 500),
 ('NUMBER_TAKEN', '{"en": "This phone number is already registered", "uz": "Bu telefon raqami allaqachon ro''yhatdan o''tgan", "ru": "Этот номер телефона уже зарегистрирован"}', 409),
@@ -264,7 +338,21 @@ insert into error(name, message, http_code) values
 ('EMAIL_TAKEN', '{"en": "This email address is already registered", "uz": "Bu elektron pochta allaqachon ro''yxatdan o''tgan", "ru": "Этот адрес электронной почты уже зарегистрирован"}', 400),
 ('NOT_ALLOWED', '{"en": "Not allowed", "uz": "Ruxsat etilmagan", "ru": "Не разрешено"}', 403),
 ('SERVICE_ALREADY_EXISTS', '{"en": "Adding multiple services in one category is not allowed", "uz": "Bitta kategoriyada bir nechta xizmat qo''shib bo''lmaydi", "ru": "Нельзя добавить несколько услуг в одну категорию"}', 409),
-('SERVICE_NOT_FOUND', '{"en": "Service not found", "uz": "Xizmat topilmadi", "ru": "Услуга не найдена"}', 404);
+('SERVICE_NOT_FOUND', '{"en": "Service not found", "uz": "Xizmat topilmadi", "ru": "Услуга не найдена"}', 404),
+('INSUFFICIENT_FUNDS', '{"en": "Insufficient funds", "uz": "Mablag'' yetarli emas", "ru": "Недостаточно средств"}', 400),
+('TRANSACTION_ERROR', '{"en": "Transaction error", "uz": "Tranzaksiyada xatolik", "ru": "Ошибка транзакции"}', 500),
+('SAME_CARD', '{"en": "You cannot transfer money to the same card", "uz": "Bitta kartaga pul o''tkazib bo''lmaydi", "ru": "Нельзя перевести деньги на ту же карту"}', 400),
+('SERVICE_NOT_ACTIVE', '{"en": "Service not available", "uz": "Xizmat mavjud emas", "ru": "Услуга недоступна"}', 400),
+('PROFILE_UPDATED', '{"en": "Profile updated successfully", "uz": "Profil muvaffaqiyatli yangilandi", "ru": "Профиль успешно обновлен"}', 200),
+('CARD_ADDED', '{"en": "Card added successfully", "uz": "Karta muvaffaqiyatli qo''shildi", "ru": "Карта успешно добавлена"}', 200),
+('CARD_UPDATED', '{"en": "Card updated successfully", "uz": "Karta muvaffaqiyatli yangilandi", "ru": "Карта успешно обновлена"}', 200),
+('CARD_DELETED', '{"en": "Card deleted successfully", "uz": "Karta muvaffaqiyatli o''chirildi", "ru": "Карта успешно удалена"}', 200),
+('SERVICE_CREATED', '{"en": "Service created successfully", "uz": "Xizmat muvaffaqiyatli yaratildi", "ru": "Услуга успешно создана"}', 200),
+('SERVICE_UPDATED', '{"en": "Service updated successfully", "uz": "Xizmat muvaffaqiyatli yangilandi", "ru": "Услуга успешно обновлена"}', 200),
+('SERVICE_DELETED', '{"en": "Service deleted successfully", "uz": "Xizmat muvaffaqiyatli o''chirildi", "ru": "Услуга успешно удалена"}', 200),
+('PAYMENT_SUCCESS', '{"en": "Payment successful", "uz": "To''lov muvaffaqiyatli amalga oshirildi", "ru": "Оплата прошла успешно"}', 200),
+('TRANSFER_SUCCESS', '{"en": "Money transferred successfully", "uz": "Pul muvaffaqiyatli o''tkazildi", "ru": "Деньги успешно переведены"}', 200)
+on conflict do nothing;
 
 insert into service_category(code, name) values
 ('MOBILE_OPERATORS', '{"en": "Mobile operators", "uz": "Mobil aloqa operatorlari", "ru": "Мобильные операторы"}'),

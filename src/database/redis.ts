@@ -1,13 +1,14 @@
 import { createClient, RedisClientType } from 'redis';
+import { REDIS_TLS } from '@config';
 
 export class RedisClient {
   private client: RedisClientType;
 
   constructor() {
     this.client = createClient({
-      url: 'redis://localhost:6379',
+      url: 'redis://default:871bcbfae7524f79b0c553b102ecfd36@first-kid-32082.kv.vercel-storage.com:32082',
       socket: {
-        tls: process.env.REDIS_TLS === 'true',
+        tls: REDIS_TLS === 'true',
       },
     });
 

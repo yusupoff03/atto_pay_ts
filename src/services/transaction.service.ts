@@ -1,6 +1,8 @@
 import { Service } from 'typedi';
 import pg from 'database';
 import { CustomError } from '@exceptions/CustomError';
+import { FileUploader } from '@utils/imageStorage';
+import moment from 'moment';
 @Service()
 export class TransactionService {
   public async payForService(customerId: string, serviceId, cardId): Promise<any> {
@@ -16,5 +18,24 @@ export class TransactionService {
       throw new CustomError(error_code, error_message);
     }
     return transfer_id;
+  }
+
+  public async getTransactions(customerId: string, offset: any, fromDate: any, toDate: any, byCardId: any, byServiceId: any): Promise<any> {
+    let transactions;
+    fromDate = moment(fromDate, 'DD/MM/YYYY').startOf('day').add(offset, 'hours').toISOString();
+    toDate = moment(toDate, 'DD/MM/YYYY').endOf('day').add(offset, 'hours').toISOString();
+    const { rows } = await pg.query(
+      `select *
+from get_transactions($1, $2, $3, $4, $5)
+order by created_at desc, (type = 'income') desc;`,
+      [customerId, fromDate, toDate, byCardId, byServiceId],
+    );
+    // eslint-disable-next-line prefer-const
+    transactions = rows;
+    transactions.forEach(t => {
+      if (t.sender.image_url) t.sender.image_url = FileUploader.getUrl(t.sender.image_url);
+      if (t.receiver.image_url) t.receiver.image_url = FileUploader.getUrl(t.receiver.image_url);
+    });
+    return transactions;
   }
 }

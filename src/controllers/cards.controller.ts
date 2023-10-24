@@ -14,8 +14,12 @@ export class CardsController {
     try {
       const customerId = this.getCustomerId(req);
       const cardDto: CreateCardDto = req.body;
-      const createCustomerData: Customer = await this.card.createCard(cardDto, String(customerId));
-      res.status(201).json({ access: true });
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = await this.card.createCard(cardDto, customerId, lang);
+      res.status(201).json({
+        success: true,
+        message,
+      });
     } catch (error) {
       next(error);
     }

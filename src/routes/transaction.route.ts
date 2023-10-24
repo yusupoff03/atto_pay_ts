@@ -14,5 +14,6 @@ export class TransactionRoute implements Routes {
   initializeRoutes() {
     this.router.post(`${this.path}/pay`, AuthMiddleware, this.transaction.pay);
     this.router.post(`${this.path}/transfer/self`, AuthMiddleware, this.transaction.transferToSelf);
+    this.router.post(`${this.path}`, AuthMiddleware, this.transaction.getCustomerTransactions);
   }
 }

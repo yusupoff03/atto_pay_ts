@@ -10,7 +10,7 @@ export const ErrorMiddleware = async (error: HttpException | CustomError, req: R
     const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
     const { rows: errorObject } = await pg.query<{ message: string; http_code: number }>(
       `SELECT message -> $2 AS message, http_code
-       FROM error
+       FROM message
        WHERE name = $1`,
       [error.name.toUpperCase(), lang],
     );
