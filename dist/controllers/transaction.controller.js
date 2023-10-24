@@ -1,58 +1,78 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TransactionController = void 0;
-const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
-const typedi_1 = require("typedi");
-const transaction_service_1 = require("../services/transaction.service");
-class TransactionController {
-    constructor() {
-        this.transaction = typedi_1.Container.get(transaction_service_1.TransactionService);
-        this.pay = async (req, res, next) => {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "TransactionController", {
+    enumerable: true,
+    get: function() {
+        return TransactionController;
+    }
+});
+const _jsonwebtoken = require("jsonwebtoken");
+const _config = require("../config");
+const _typedi = require("typedi");
+const _transactionservice = require("../services/transaction.service");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+let TransactionController = class TransactionController {
+    constructor(){
+        _define_property(this, "transaction", _typedi.Container.get(_transactionservice.TransactionService));
+        _define_property(this, "pay", async (req, res, next)=>{
             try {
                 const { serviceId, fromCardId } = req.body;
                 const customerId = await this.getCustomerId(req);
                 const paymentId = await this.transaction.payForService(customerId, serviceId, fromCardId);
                 res.status(200).json({
                     success: true,
-                    paymentId,
+                    paymentId
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.transferToSelf = async (req, res, next) => {
+        });
+        _define_property(this, "transferToSelf", async (req, res, next)=>{
             try {
                 const customerId = await this.getCustomerId(req);
                 const { fromCardId, toCardId, amount } = req.body;
                 const transferId = await this.transaction.transferMoneyToSelf(customerId, fromCardId, toCardId, amount);
                 res.status(200).json({
                     success: true,
-                    transferId,
+                    transferId
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.getCustomerTransactions = async (req, res, next) => {
+        });
+        _define_property(this, "getCustomerTransactions", async (req, res, next)=>{
             try {
                 const customerId = await this.getCustomerId(req);
                 const { offset, fromDate, toDate, byCardId = null, byServiceId = null } = req.body;
                 const transactions = await this.transaction.getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId);
-                res.status(200).json({ length: transactions.length, transactions });
-            }
-            catch (error) {
+                res.status(200).json({
+                    length: transactions.length,
+                    transactions
+                });
+            } catch (error) {
                 next(error);
             }
-        };
-        this.getCustomerId = async (req) => {
+        });
+        _define_property(this, "getCustomerId", async (req)=>{
             const cookie = req.headers.authorization;
-            const decodedToken = (0, jsonwebtoken_1.verify)(cookie, _config_1.SECRET_KEY);
+            const decodedToken = (0, _jsonwebtoken.verify)(cookie, _config.SECRET_KEY);
             return decodedToken.id;
-        };
+        });
     }
-}
-exports.TransactionController = TransactionController;
+};
+
 //# sourceMappingURL=transaction.controller.js.map

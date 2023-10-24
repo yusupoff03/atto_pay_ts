@@ -1,12 +1,28 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.client = void 0;
-const pg_1 = require("pg");
-const _config_1 = require("../config");
-exports.client = new pg_1.Client({
-    connectionString: `${_config_1.POSTGRES_URL}`,
-    ssl: _config_1.POSTGRES_SSL === 'true',
+Object.defineProperty(exports, "__esModule", {
+    value: true
 });
-exports.client.connect();
-exports.default = exports.client;
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    client: function() {
+        return client;
+    },
+    default: function() {
+        return _default;
+    }
+});
+const _pg = require("pg");
+const _config = require("../config");
+const client = new _pg.Client({
+    connectionString: `${_config.POSTGRES_URL}`,
+    ssl: _config.POSTGRES_SSL === 'true'
+});
+client.connect();
+const _default = client;
+
 //# sourceMappingURL=index.js.map

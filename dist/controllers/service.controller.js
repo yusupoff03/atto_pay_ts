@@ -1,29 +1,48 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ServiceController = void 0;
-const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
-const httpException_1 = require("../exceptions/httpException");
-const service_service_1 = require("../services/service.service");
-const typedi_1 = require("typedi");
-class ServiceController {
-    constructor() {
-        this.service = typedi_1.Container.get(service_service_1.ServiceService);
-        this.getMerchantServices = async (req, res, next) => {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "ServiceController", {
+    enumerable: true,
+    get: function() {
+        return ServiceController;
+    }
+});
+const _jsonwebtoken = require("jsonwebtoken");
+const _config = require("../config");
+const _httpException = require("../exceptions/httpException");
+const _serviceservice = require("../services/service.service");
+const _typedi = require("typedi");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+let ServiceController = class ServiceController {
+    constructor(){
+        _define_property(this, "service", _typedi.Container.get(_serviceservice.ServiceService));
+        _define_property(this, "getMerchantServices", async (req, res, next)=>{
             try {
                 const merchantId = await this.getMerchantId(req);
                 const lang = req.acceptsLanguages();
                 const services = await this.service.getMerchantServices(merchantId, lang);
                 res.status(200).json({
                     count: services.length,
-                    services,
+                    services
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.deleteOneById = async (req, res, next) => {
+        });
+        _define_property(this, "deleteOneById", async (req, res, next)=>{
             try {
                 const merchantId = await this.getMerchantId(req);
                 const serviceId = req.body.id;
@@ -31,84 +50,79 @@ class ServiceController {
                 const message = await this.service.deleteOneById(merchantId, serviceId, lang);
                 res.status(200).json({
                     success: true,
-                    message,
+                    message
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.createService = async (req, res, next) => {
-            var _a;
+        });
+        _define_property(this, "createService", async (req, res, next)=>{
             try {
+                var _req_files;
                 const merchantId = await this.getMerchantId(req);
                 const service = req.body;
                 const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
                 service.merchant_id = merchantId;
-                const message = await this.service.createService(service, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image, lang);
+                const message = await this.service.createService(service, (_req_files = req.files) === null || _req_files === void 0 ? void 0 : _req_files.image, lang);
                 res.status(201).json({
                     success: true,
-                    message,
+                    message
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.getAllServices = async (req, res, next) => {
+        });
+        _define_property(this, "getAllServices", async (req, res, next)=>{
             try {
                 const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
                 const customerId = await this.getCustomerId(req);
                 const services = await this.service.getAllServices(lang, customerId);
                 res.status(200).json({
                     count: services.length,
-                    services,
+                    services
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.getOneById = async (req, res, next) => {
+        });
+        _define_property(this, "getOneById", async (req, res, next)=>{
             try {
                 const merchantId = await this.getMerchantId(req);
                 const id = req.params.id;
                 const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
                 const service = await this.service.getOneById(merchantId, id, lang);
                 res.status(200).json(service);
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.editService = async (req, res, next) => {
-            var _a;
+        });
+        _define_property(this, "editService", async (req, res, next)=>{
             try {
+                var _req_files;
                 const merchantId = await this.getMerchantId(req);
                 const serviceUpdate = req.body;
-                await this.service.updateService(merchantId, serviceUpdate, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image);
+                await this.service.updateService(merchantId, serviceUpdate, (_req_files = req.files) === null || _req_files === void 0 ? void 0 : _req_files.image);
                 res.status(200).json({
-                    success: true,
+                    success: true
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 next(error);
             }
-        };
-        this.getMerchantId = async (req) => {
+        });
+        _define_property(this, "getMerchantId", async (req)=>{
             const token = req.headers.authorization;
-            const decodedToken = (0, jsonwebtoken_1.verify)(token, _config_1.SECRET_KEY);
+            const decodedToken = (0, _jsonwebtoken.verify)(token, _config.SECRET_KEY);
             if (decodedToken.role) {
                 return String(decodedToken.id);
             }
-            throw new httpException_1.HttpException(403, 'You dont have access to this recourse');
-        };
-        this.getCustomerId = async (req) => {
+            throw new _httpException.HttpException(403, 'You dont have access to this recourse');
+        });
+        _define_property(this, "getCustomerId", async (req)=>{
             const cookie = req.headers.authorization;
-            const decodedToken = (0, jsonwebtoken_1.verify)(cookie, _config_1.SECRET_KEY);
+            const decodedToken = (0, _jsonwebtoken.verify)(cookie, _config.SECRET_KEY);
             return decodedToken.id;
-        };
+        });
     }
-}
-exports.ServiceController = ServiceController;
+};
+
 //# sourceMappingURL=service.controller.js.map

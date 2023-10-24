@@ -1,18 +1,38 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CategoryRoute = void 0;
-const express_1 = require("express");
-const category_controller_1 = require("../controllers/category.controller");
-class CategoryRoute {
-    constructor() {
-        this.path = '/category';
-        this.router = (0, express_1.Router)();
-        this.category = new category_controller_1.CategoryController();
-        this.initializeRoutes();
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "CategoryRoute", {
+    enumerable: true,
+    get: function() {
+        return CategoryRoute;
     }
+});
+const _express = require("express");
+const _categorycontroller = require("../controllers/category.controller");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+let CategoryRoute = class CategoryRoute {
     initializeRoutes() {
         this.router.get(`${this.path}`, this.category.getAllCategory);
     }
-}
-exports.CategoryRoute = CategoryRoute;
+    constructor(){
+        _define_property(this, "path", '/category');
+        _define_property(this, "router", (0, _express.Router)());
+        _define_property(this, "category", new _categorycontroller.CategoryController());
+        this.initializeRoutes();
+    }
+};
+
 //# sourceMappingURL=category.route.js.map

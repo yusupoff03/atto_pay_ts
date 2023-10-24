@@ -1,8 +1,8 @@
 // import request from 'supertest';
-// import { App } from '../app';
-// import pg from '../database';
-// import { CreateCustomerDto } from '../dtos/customer.dto';
-// import { CustomersRoute } from '../routes/customers.route';
+// import { App } from '@/app';
+// import pg from '@database';
+// import { CreateCustomerDto } from '@dtos/customer.dto';
+// import { CustomersRoute } from '@routes/customers.route';
 //
 // afterAll(async () => {
 //   await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
@@ -70,4 +70,6 @@
 //     });
 //   });
 // });
+"use strict";
+
 //# sourceMappingURL=users.test.js.map

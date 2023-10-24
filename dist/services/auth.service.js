@@ -1,216 +1,346 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthService = void 0;
-const tslib_1 = require("tslib");
-const bcrypt_1 = require("bcrypt");
-const jsonwebtoken_1 = require("jsonwebtoken");
-const typedi_1 = require("typedi");
-const _config_1 = require("../config");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const httpException_1 = require("../exceptions/httpException");
-const redis_1 = require("../database/redis");
-const moment_1 = tslib_1.__importDefault(require("moment"));
-const bcrypt_2 = tslib_1.__importDefault(require("bcrypt"));
-const CustomError_1 = require("../exceptions/CustomError");
-const createToken = (customer) => {
-    const dataStoredInToken = { id: customer.id };
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "AuthService", {
+    enumerable: true,
+    get: function() {
+        return AuthService;
+    }
+});
+const _bcrypt = /*#__PURE__*/ _interop_require_wildcard(require("bcrypt"));
+const _jsonwebtoken = require("jsonwebtoken");
+const _typedi = require("typedi");
+const _config = require("../config");
+const _database = /*#__PURE__*/ _interop_require_default(require("../database"));
+const _httpException = require("../exceptions/httpException");
+const _redis = require("../database/redis");
+const _moment = /*#__PURE__*/ _interop_require_default(require("moment"));
+const _CustomError = require("../exceptions/CustomError");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+function _interop_require_default(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
+function _getRequireWildcardCache(nodeInterop) {
+    if (typeof WeakMap !== "function") return null;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function(nodeInterop) {
+        return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
+}
+function _interop_require_wildcard(obj, nodeInterop) {
+    if (!nodeInterop && obj && obj.__esModule) {
+        return obj;
+    }
+    if (obj === null || typeof obj !== "object" && typeof obj !== "function") {
+        return {
+            default: obj
+        };
+    }
+    var cache = _getRequireWildcardCache(nodeInterop);
+    if (cache && cache.has(obj)) {
+        return cache.get(obj);
+    }
+    var newObj = {};
+    var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+    for(var key in obj){
+        if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+            var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+            if (desc && (desc.get || desc.set)) {
+                Object.defineProperty(newObj, key, desc);
+            } else {
+                newObj[key] = obj[key];
+            }
+        }
+    }
+    newObj.default = obj;
+    if (cache) {
+        cache.set(obj, newObj);
+    }
+    return newObj;
+}
+function _ts_decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for(var i = decorators.length - 1; i >= 0; i--)if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function _ts_metadata(k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+}
+const createToken = (customer)=>{
+    const dataStoredInToken = {
+        id: customer.id
+    };
     const expiresIn = 60 * 60;
-    return { expiresIn, token: (0, jsonwebtoken_1.sign)(dataStoredInToken, _config_1.SECRET_KEY, { expiresIn }) };
+    return {
+        expiresIn,
+        token: (0, _jsonwebtoken.sign)(dataStoredInToken, _config.SECRET_KEY, {
+            expiresIn
+        })
+    };
 };
-const createTokenMerchant = (merchant) => {
-    const dataStoredInToken = { id: merchant.id, role: 'Merchant' };
+const createTokenMerchant = (merchant)=>{
+    const dataStoredInToken = {
+        id: merchant.id,
+        role: 'Merchant'
+    };
     const expiresIn = 60 * 60;
-    return { expiresIn, token: (0, jsonwebtoken_1.sign)(dataStoredInToken, _config_1.SECRET_KEY, { expiresIn }) };
+    return {
+        expiresIn,
+        token: (0, _jsonwebtoken.sign)(dataStoredInToken, _config.SECRET_KEY, {
+            expiresIn
+        })
+    };
 };
-const createCookie = (tokenData) => {
+const createCookie = (tokenData)=>{
     return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};`;
 };
 let AuthService = class AuthService {
-    constructor() {
-        this.redis = new redis_1.RedisClient();
-    }
     async signup(customerData, trust, uid) {
         const { name, phone, password } = customerData;
-        const { rows: findCustomer } = await _database_1.default.query(`
+        const { rows: findCustomer } = await _database.default.query(`
         SELECT EXISTS(
                  SELECT "phone"
                  FROM customer
                  WHERE "phone" = $1
-                 )`, [phone]);
-        if (findCustomer[0].exists)
-            throw new CustomError_1.CustomError('NUMBER_TAKEN');
-        const hashedPassword = await (0, bcrypt_1.hash)(password, 10);
-        const { rows: signUpCustomerData } = await _database_1.default.query(`
+                 )`, [
+            phone
+        ]);
+        if (findCustomer[0].exists) throw new _CustomError.CustomError('NUMBER_TAKEN');
+        const hashedPassword = await (0, _bcrypt.hash)(password, 10);
+        const { rows: signUpCustomerData } = await _database.default.query(`
         INSERT INTO customer("name",
                              "phone",
                              "hashed_password")
         VALUES ($1, $2, $3)
         RETURNING "id",phone,hashed_password
-      `, [name, phone, hashedPassword]);
+      `, [
+            name,
+            phone,
+            hashedPassword
+        ]);
         if (uid && trust) {
             console.log(uid);
-            _database_1.default.query(`INSERT INTO customer_device(customer_id, device_id)
-         values ($1, $2)`, [signUpCustomerData[0].id, uid]);
+            _database.default.query(`INSERT INTO customer_device(customer_id, device_id)
+         values ($1, $2)`, [
+                signUpCustomerData[0].id,
+                uid
+            ]);
         }
         const tokenData = createToken(signUpCustomerData[0]);
         const token = tokenData.token;
         const cookie = createCookie(tokenData);
-        return { customer: signUpCustomerData[0], cookie, token };
+        return {
+            customer: signUpCustomerData[0],
+            cookie,
+            token
+        };
     }
     async login(CustomerData, deviceId) {
         let customerStatus = {};
         const { phone, password, trust, otp } = CustomerData;
         const newTrust = trust || false;
-        const { rows, rowCount } = await _database_1.default.query(`
+        const { rows, rowCount } = await _database.default.query(`
         SELECT "id",
                "phone",
                "hashed_password"
         FROM customer
         WHERE "phone" = $1
-      `, [phone]);
+      `, [
+            phone
+        ]);
         if (!rowCount) {
-            throw new CustomError_1.CustomError('USER_NOT_FOUND');
+            throw new _CustomError.CustomError('USER_NOT_FOUND');
         }
         const customerStatusResult = await this.redis.hGet('customer_status', phone);
         if (customerStatusResult) {
             customerStatus = JSON.parse(customerStatusResult);
             if (customerStatus.is_blocked) {
-                const unBlockTime = (0, moment_1.default)(customerStatus.last_login_attempt).add(1, 'minute');
-                if ((0, moment_1.default)().isBefore(unBlockTime)) {
-                    const timeLeft = unBlockTime.diff((0, moment_1.default)(), 'seconds');
+                const unBlockTime = (0, _moment.default)(customerStatus.last_login_attempt).add(1, 'minute');
+                if ((0, _moment.default)().isBefore(unBlockTime)) {
+                    const timeLeft = unBlockTime.diff((0, _moment.default)(), 'seconds');
                     console.log(timeLeft);
-                    throw new CustomError_1.CustomError('USER_BLOCKED', null, timeLeft);
+                    throw new _CustomError.CustomError('USER_BLOCKED', null, timeLeft);
                 }
                 customerStatus.is_blocked = false;
                 customerStatus.last_login_attempt = null; // Set to null since it's not a Moment object anymore
             }
         }
-        const deviceResult = await _database_1.default.query(`Select * from customer_device where device_id= $1 and customer_id = $2`, [deviceId, rows[0].id]);
+        const deviceResult = await _database.default.query(`Select * from customer_device where device_id= $1 and customer_id = $2`, [
+            deviceId,
+            rows[0].id
+        ]);
         const loginType = deviceResult.rows.length > 0 ? 'otp' : 'password';
         if (loginType === 'password') {
-            const isCorrect = bcrypt_2.default.compareSync(password, rows[0].hashed_password);
+            const isCorrect = _bcrypt.default.compareSync(password, rows[0].hashed_password);
             if (!isCorrect) {
-                if (customerStatus.last_login_attempt &&
-                    (0, moment_1.default)().isBefore((0, moment_1.default)(customerStatus.last_login_attempt).add(customerStatus.safe_login_after, 'seconds'))) {
+                if (customerStatus.last_login_attempt && (0, _moment.default)().isBefore((0, _moment.default)(customerStatus.last_login_attempt).add(customerStatus.safe_login_after, 'seconds'))) {
                     customerStatus.is_blocked = true;
                     customerStatus.safe_login_after = 0;
+                } else {
+                    customerStatus.safe_login_after = customerStatus.last_login_attempt ? Math.max(60 - (0, _moment.default)().diff(customerStatus.last_login_attempt, 'seconds'), 0) : 0;
                 }
-                else {
-                    customerStatus.safe_login_after = customerStatus.last_login_attempt
-                        ? Math.max(60 - (0, moment_1.default)().diff(customerStatus.last_login_attempt, 'seconds'), 0)
-                        : 0;
-                }
-                customerStatus.last_login_attempt = (0, moment_1.default)();
+                customerStatus.last_login_attempt = (0, _moment.default)();
                 await this.redis.hSet('customer_status', phone, JSON.stringify(customerStatus));
                 if (customerStatus.is_blocked) {
-                    throw new CustomError_1.CustomError('USER_BLOCKED');
-                }
-                else {
-                    throw new CustomError_1.CustomError('WRONG_PASSWORD');
+                    throw new _CustomError.CustomError('USER_BLOCKED');
+                } else {
+                    throw new _CustomError.CustomError('WRONG_PASSWORD');
                 }
             }
-        }
-        else {
+        } else {
             const redisOtp = await this.redis.hGet('otp', phone);
             if (!redisOtp) {
                 return;
             }
             const otpObject = JSON.parse(redisOtp);
-            if ((0, moment_1.default)().isAfter(otpObject.expiresAt)) {
+            if ((0, _moment.default)().isAfter(otpObject.expiresAt)) {
                 await this.redis.hDel('otp', phone);
-                throw new CustomError_1.CustomError('EXPIRED_OTP');
+                throw new _CustomError.CustomError('EXPIRED_OTP');
             }
-            if (otpObject.code === parseInt(otp) && (0, moment_1.default)().isBefore(otpObject.expiresAt)) {
+            if (otpObject.code === parseInt(otp) && (0, _moment.default)().isBefore(otpObject.expiresAt)) {
                 await this.redis.hDel('otp', phone);
-            }
-            else {
+            } else {
                 return;
             }
         }
         if (newTrust) {
-            await _database_1.default.query(`Insert into customer_device(customer_id, device_id) values ($1,$2)`, [rows[0].id, deviceId]);
+            await _database.default.query(`Insert into customer_device(customer_id, device_id) values ($1,$2)`, [
+                rows[0].id,
+                deviceId
+            ]);
         }
         const tokenData = createToken(rows[0]); // Replace with your token creation logic
-        return { tokenData, findCustomer: rows[0] };
+        return {
+            tokenData,
+            findCustomer: rows[0]
+        };
     }
     async getLoginType(phone, deviceId) {
-        const { rows } = await _database_1.default.query(`Select *
+        const { rows } = await _database.default.query(`Select *
                                      from customer
-                                     where phone = $1`, [phone]);
-        if (!rows[0])
-            throw new CustomError_1.CustomError('USER_NOT_FOUND');
+                                     where phone = $1`, [
+            phone
+        ]);
+        if (!rows[0]) throw new _CustomError.CustomError('USER_NOT_FOUND');
         if (!deviceId) {
-            return { password: true, otp: false };
+            return {
+                password: true,
+                otp: false
+            };
         }
-        const { rows: customerPhone } = await _database_1.default.query(`Select *
+        const { rows: customerPhone } = await _database.default.query(`Select *
                                                     from customer_device
-                                                    where customer_id = $1`, [rows[0].id]);
-        if (!customerPhone[0])
-            return { password: true, otp: false };
+                                                    where customer_id = $1`, [
+            rows[0].id
+        ]);
+        if (!customerPhone[0]) return {
+            password: true,
+            otp: false
+        };
         const otpObject = {
             code: Math.floor(100000 + Math.random() * 900000),
-            expiresAt: (0, moment_1.default)().add(2, 'minutes').valueOf(),
+            expiresAt: (0, _moment.default)().add(2, 'minutes').valueOf()
         };
         this.redis.hSet('otp', rows[0].phone, JSON.stringify(otpObject));
-        return { password: false, otp: true };
+        return {
+            password: false,
+            otp: true
+        };
     }
     async logout(customerData) {
         const { phone, hashed_password } = customerData;
-        const { rows, rowCount } = await _database_1.default.query(`
+        const { rows, rowCount } = await _database.default.query(`
         SELECT "phone",
                "hashed_password"
         FROM customer
         WHERE "phone" = $1
           AND "hashed_password" = $2
-      `, [phone, hashed_password]);
-        if (!rowCount)
-            throw new httpException_1.HttpException(409, "Customer doesn't exist");
+      `, [
+            phone,
+            hashed_password
+        ]);
+        if (!rowCount) throw new _httpException.HttpException(409, "Customer doesn't exist");
         return rows[0];
     }
     async signUpMerchant(merchant) {
         const { name, email, password } = merchant;
-        const { rows: findMerchant } = await _database_1.default.query(`
+        const { rows: findMerchant } = await _database.default.query(`
         SELECT EXISTS(
                  SELECT "email"
                  FROM merchant
                  WHERE "email" = $1
-                 )`, [email]);
-        if (findMerchant[0].exists)
-            throw new CustomError_1.CustomError('EMAIL_TAKEN');
-        const hashedPassword = await (0, bcrypt_1.hash)(password, 10);
-        const { rows: signMerchantData } = await _database_1.default.query(`
+                 )`, [
+            email
+        ]);
+        if (findMerchant[0].exists) throw new _CustomError.CustomError('EMAIL_TAKEN');
+        const hashedPassword = await (0, _bcrypt.hash)(password, 10);
+        const { rows: signMerchantData } = await _database.default.query(`
         INSERT INTO merchant("name",
                              "email",
                              "hashed_password")
         VALUES ($1, $2, $3)
         RETURNING "id",email,hashed_password
-      `, [name, email, hashedPassword]);
+      `, [
+            name,
+            email,
+            hashedPassword
+        ]);
         const tokenData = createTokenMerchant(signMerchantData[0]);
         const cookie = createCookie(tokenData);
-        return { merchant: signMerchantData[0], tokenData, cookie };
+        return {
+            merchant: signMerchantData[0],
+            tokenData,
+            cookie
+        };
     }
     async loginMerchant(merchant) {
         const { email, password } = merchant;
-        const { rows, rowCount } = await _database_1.default.query(`
+        const { rows, rowCount } = await _database.default.query(`
         SELECT "id",
                "email",
                "hashed_password"
         FROM merchant
         WHERE "email" = $1
-      `, [email]);
-        if (!rowCount)
-            throw new CustomError_1.CustomError('USER_NOT_FOUND');
-        const isPasswordMatching = await (0, bcrypt_1.compare)(password, rows[0].hashed_password);
-        if (!isPasswordMatching)
-            throw new CustomError_1.CustomError('WRONG_PASSWORD');
+      `, [
+            email
+        ]);
+        if (!rowCount) throw new _CustomError.CustomError('USER_NOT_FOUND');
+        const isPasswordMatching = await (0, _bcrypt.compare)(password, rows[0].hashed_password);
+        if (!isPasswordMatching) throw new _CustomError.CustomError('WRONG_PASSWORD');
         const tokenData = createTokenMerchant(rows[0]);
         const cookie = createCookie(tokenData);
-        return { merchant: rows[0], cookie, tokenData };
+        return {
+            merchant: rows[0],
+            cookie,
+            tokenData
+        };
+    }
+    constructor(){
+        _define_property(this, "redis", void 0);
+        this.redis = new _redis.RedisClient();
     }
 };
-AuthService = tslib_1.__decorate([
-    (0, typedi_1.Service)(),
-    tslib_1.__metadata("design:paramtypes", [])
+AuthService = _ts_decorate([
+    (0, _typedi.Service)(),
+    _ts_metadata("design:type", Function),
+    _ts_metadata("design:paramtypes", [])
 ], AuthService);
-exports.AuthService = AuthService;
+
 //# sourceMappingURL=auth.service.js.map

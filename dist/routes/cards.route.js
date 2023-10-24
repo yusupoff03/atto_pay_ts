@@ -1,26 +1,46 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CardsRoute = void 0;
-const express_1 = require("express");
-const cards_controller_1 = require("../controllers/cards.controller");
-const validation_middleware_1 = require("../middlewares/validation.middleware");
-const card_dto_1 = require("../dtos/card.dto");
-const auth_middleware_1 = require("../middlewares/auth.middleware");
-class CardsRoute {
-    constructor() {
-        this.path = '/customer/card';
-        this.router = (0, express_1.Router)();
-        this.cards = new cards_controller_1.CardsController();
-        this.initializeRoutes();
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "CardsRoute", {
+    enumerable: true,
+    get: function() {
+        return CardsRoute;
     }
+});
+const _express = require("express");
+const _cardscontroller = require("../controllers/cards.controller");
+const _validationmiddleware = require("../middlewares/validation.middleware");
+const _carddto = require("../dtos/card.dto");
+const _authmiddleware = require("../middlewares/auth.middleware");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+let CardsRoute = class CardsRoute {
     initializeRoutes() {
-        this.router.post(`${this.path}`, (0, validation_middleware_1.ValidationMiddleware)(card_dto_1.CreateCardDto), this.cards.createCard);
-        this.router.post(`${this.path}/owner`, auth_middleware_1.AuthMiddleware, this.cards.getOwnerByPan);
+        this.router.post(`${this.path}`, (0, _validationmiddleware.ValidationMiddleware)(_carddto.CreateCardDto), this.cards.createCard);
+        this.router.post(`${this.path}/owner`, _authmiddleware.AuthMiddleware, this.cards.getOwnerByPan);
         this.router.get(`${this.path}`, this.cards.getCustomerCards);
         this.router.get(`${this.path}/:id`, this.cards.getOneById);
         this.router.delete(`${this.path}`, this.cards.deleteCard);
         this.router.put(`${this.path}`, this.cards.updateCard);
     }
-}
-exports.CardsRoute = CardsRoute;
+    constructor(){
+        _define_property(this, "path", '/customer/card');
+        _define_property(this, "router", (0, _express.Router)());
+        _define_property(this, "cards", new _cardscontroller.CardsController());
+        this.initializeRoutes();
+    }
+};
+
 //# sourceMappingURL=cards.route.js.map

@@ -1,8 +1,8 @@
 // import request from 'supertest';
-// import { App } from '../app';
-// import pg from '../database';
-// import { CreateCustomerDto } from '../dtos/customer.dto';
-// import { AuthRoute } from '../routes/auth.route';
+// import { App } from '@/app';
+// import pg from '@database';
+// import { CreateCustomerDto } from '@dtos/customer.dto';
+// import { AuthRoute } from '@routes/auth.route';
 //
 // afterAll(async () => {
 //   await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
@@ -40,4 +40,6 @@
 //     });
 //   });
 // });
+"use strict";
+
 //# sourceMappingURL=auth.test.js.map
