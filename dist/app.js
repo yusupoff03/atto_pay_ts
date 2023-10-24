@@ -15,12 +15,10 @@ const _cors = /*#__PURE__*/ _interop_require_default(require("cors"));
 const _express = /*#__PURE__*/ _interop_require_default(require("express"));
 const _helmet = /*#__PURE__*/ _interop_require_default(require("helmet"));
 const _hpp = /*#__PURE__*/ _interop_require_default(require("hpp"));
-const _morgan = /*#__PURE__*/ _interop_require_default(require("morgan"));
 const _swaggerjsdoc = /*#__PURE__*/ _interop_require_default(require("swagger-jsdoc"));
 const _swaggeruiexpress = /*#__PURE__*/ _interop_require_default(require("swagger-ui-express"));
 const _config = require("./config");
 const _errormiddleware = require("./middlewares/error.middleware");
-const _logger = require("./utils/logger");
 const _expressfileupload = /*#__PURE__*/ _interop_require_default(require("express-fileupload"));
 function _define_property(obj, key, value) {
     if (key in obj) {
@@ -43,19 +41,17 @@ function _interop_require_default(obj) {
 let App = class App {
     listen() {
         this.app.listen(this.port, ()=>{
-            _logger.logger.info(`=================================`);
-            _logger.logger.info(`======= ENV: ${this.env} =======`);
-            _logger.logger.info(`🚀 App listening on the port ${this.port}`);
-            _logger.logger.info(`=================================`);
+        // logger.info(`=================================`);
+        // logger.info(`======= ENV: ${this.env} =======`);
+        // logger.info(`🚀 App listening on the port ${this.port}`);
+        // logger.info(`=================================`);
         });
     }
     getServer() {
         return this.app;
     }
     initializeMiddlewares() {
-        this.app.use((0, _morgan.default)(_config.LOG_FORMAT, {
-            stream: _logger.stream
-        }));
+        // this.app.use(morgan(LOG_FORMAT, { stream }));
         this.app.use((0, _cors.default)({
             origin: _config.ORIGIN,
             credentials: _config.CREDENTIALS

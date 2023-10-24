@@ -27,7 +27,7 @@ function _interop_require_default(obj) {
     };
 }
 // logs dir
-const logDir = (0, _path.join)(__dirname, _config.LOG_DIR);
+const logDir = (0, _path.join)(_config.LOG_DIR, '/logs');
 if (!(0, _fs.existsSync)(logDir)) {
     (0, _fs.mkdirSync)(logDir);
 }
