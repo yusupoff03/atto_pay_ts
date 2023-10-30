@@ -12,7 +12,6 @@ class MerchantController {
         this.getMerchantProfile = async (req, res, next) => {
             try {
                 const merchantId = await this.getMerchantId(req);
-                console.log(merchantId);
                 const merchant = await this.merchant.getMerchantById(merchantId);
                 delete merchant.hashed_password;
                 res.status(200).json(merchant);
@@ -47,8 +46,6 @@ class MerchantController {
         };
         this.getMerchantId = async (req) => {
             const token = req.headers.authorization;
-            console.log(token);
-            // const token: string = cookie.replace(/"/g, '');
             const decodedToken = (0, jsonwebtoken_1.verify)(token, _config_1.SECRET_KEY);
             if (decodedToken.role) {
                 return String(decodedToken.id);

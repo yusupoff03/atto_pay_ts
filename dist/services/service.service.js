@@ -13,6 +13,7 @@ let ServiceService = class ServiceService {
     async createService(serviceData, lang, image) {
         const { name, price, merchant_id, categoryId, isActive } = serviceData;
         const { rows } = await _database_1.default.query(`Select * from service where merchant_id=$1 and category_id=$2 and deleted = false`, [merchant_id, categoryId]);
+        console.log(rows[0]);
         if (rows[0])
             throw new CustomError_1.CustomError('SERVICE_ALREADY_EXISTS');
         const newActive = isActive || false;
@@ -66,7 +67,6 @@ where merchant_id = $2 and deleted = false`, [lang, merchantId]);
                 });
             });
         }
-        console.log(services);
         return services;
     }
     async getOneById(merchantId, serviceId, lang) {
@@ -92,7 +92,7 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`, [serviceId, merch
                       and deleted = false returning (select message from message where name = 'SERVICE_DELETED')`, [serviceId, merchantId]);
         return message[lang];
     }
-    async updateService(merchantId, service, image) {
+    async updateService(merchantId, service, lang, image) {
         const { rows } = await _database_1.default.query(`Select * from service where merchant_id = $1 and id = $2`, [merchantId, service.id]);
         if (!rows[0])
             throw new CustomError_1.CustomError('SERVICE_NOT_FOUND');
@@ -100,7 +100,6 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`, [serviceId, merch
         const categoryId = service.categoryId || rows[0].category_id;
         const price = service.price || rows[0].price;
         const isActive = service.isActive || rows[0].is_active;
-        console.log(rows[0].image_url);
         if (image || service.deleteImage) {
             await this.fileUploader.deleteFile(`${rows[0].image_url}`);
             if (image) {
@@ -111,13 +110,8 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`, [serviceId, merch
                 await _database_1.default.query(`Update service set image_url = $1 where id = $2`, [null, service.id]);
             }
         }
-        await _database_1.default.query(`Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5`, [
-            name,
-            price,
-            categoryId,
-            isActive,
-            service.id,
-        ]);
+        const { rows: message } = await _database_1.default.query(`Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5 returning (select message from message where name = 'SERVICE_UPDATED')`, [name, price, categoryId, isActive, service.id]);
+        return message[0].message[lang];
     }
 };
 ServiceService = tslib_1.__decorate([

@@ -7,6 +7,7 @@ const _database_1 = tslib_1.__importDefault(require("../database"));
 const ErrorMiddleware = async (error, req, res, next) => {
     var _a, _b, _c;
     const isDevenv = process.env.NODE_ENV === 'development';
+    console.log(error);
     try {
         const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
         const { rows: errorObject } = await _database_1.default.query(`SELECT message -> $2 AS message, http_code

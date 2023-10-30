@@ -45,7 +45,7 @@ class ServiceController {
                 const service = req.body;
                 const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
                 service.merchant_id = merchantId;
-                const message = await this.service.createService(service, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image, lang);
+                const message = await this.service.createService(service, lang, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image);
                 res.status(201).json({
                     success: true,
                     message,
@@ -85,10 +85,12 @@ class ServiceController {
             var _a;
             try {
                 const merchantId = await this.getMerchantId(req);
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
                 const serviceUpdate = req.body;
-                await this.service.updateService(merchantId, serviceUpdate, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image);
+                const message = await this.service.updateService(merchantId, serviceUpdate, lang, (_a = req.files) === null || _a === void 0 ? void 0 : _a.image);
                 res.status(200).json({
                     success: true,
+                    message,
                 });
             }
             catch (error) {

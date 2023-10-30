@@ -27,7 +27,7 @@ class CardsController {
             try {
                 const customer_id = this.getCustomerId(req);
                 const cards = await this.card.getCustomerCards(String(customer_id));
-                res.status(201).json({ cards, length: cards.length });
+                res.status(201).json({ cards, count: cards.length });
             }
             catch (error) {
                 next(error);
@@ -37,8 +37,9 @@ class CardsController {
             try {
                 const customerId = this.getCustomerId(req);
                 const cardUpdateDto = req.body;
-                const card = await this.card.updateCard(String(customerId), cardUpdateDto);
-                res.status(201).json({ success: true });
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+                const message = await this.card.updateCard(String(customerId), cardUpdateDto, lang);
+                res.status(201).json({ success: true, message });
             }
             catch (error) {
                 next(error);
@@ -48,8 +49,9 @@ class CardsController {
             try {
                 const customerId = this.getCustomerId(req);
                 const { id } = req.body;
-                const deleteCard = await this.card.deleteCard(String(customerId), id);
-                res.status(202).json({ success: deleteCard, message: 'Card deleted' });
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+                const message = await this.card.deleteCard(String(customerId), id, lang);
+                res.status(202).json({ success: true, message });
             }
             catch (error) {
                 next(error);
@@ -78,8 +80,7 @@ class CardsController {
         };
         this.getCustomerId = (req) => {
             const cookie = req.headers.authorization;
-            const token = cookie.replace(/"/g, '');
-            const decodedToken = (0, jsonwebtoken_1.verify)(token, _config_1.SECRET_KEY);
+            const decodedToken = (0, jsonwebtoken_1.verify)(cookie, _config_1.SECRET_KEY);
             return String(decodedToken.id);
         };
     }

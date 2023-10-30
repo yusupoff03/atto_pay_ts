@@ -29,21 +29,19 @@ where pan = $1`, [pan]);
         }
         return rows;
     }
-    async updateCard(customerId, cardDto) {
+    async updateCard(customerId, cardDto, lang) {
         const { name, id } = cardDto;
         const { rows } = await _database_1.default.query(`UPDATE customer_card
                                      SET name=$1
                                      where id = $2
-                                       and customer_id = $3 RETURNING *`, [name, id, customerId]);
+                                       and customer_id = $3 RETURNING (select message from message where name = 'CARD_UPDATED')`, [name, id, customerId]);
         if (!rows[0]) {
             throw new CustomError_1.CustomError('CARD_NOT_FOUND');
         }
-        return rows[0];
+        return rows[0].message[lang];
     }
-    async deleteCard(customerId, cardId) {
+    async deleteCard(customerId, cardId, lang) {
         const { rows } = await _database_1.default.query(`Select * from customer_card where id=$1 and customer_id=$2`, [cardId, customerId]);
-        console.log(cardId);
-        console.log(customerId);
         if (!rows[0]) {
             throw new CustomError_1.CustomError('CARD_NOT_FOUND');
         }
@@ -51,7 +49,8 @@ where pan = $1`, [pan]);
         if (error[0].error_code) {
             throw new CustomError_1.CustomError(error[0].error_code, error[0].error_message);
         }
-        return true;
+        const { rows: message } = await _database_1.default.query(`Select message from message where name = 'CARD_DELETED'`);
+        return message[0].message[lang];
     }
     async getOneById(customerId, cardId) {
         const { rows } = await _database_1.default.query(`Select * from customer_card where id= $1  and customer_id = $2`, [cardId, customerId]);

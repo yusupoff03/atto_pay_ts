@@ -7,5 +7,5 @@ export declare class ServiceService {
     getAllServices(lang: any, customerId: any): Promise<ServiceInterface[]>;
     getOneById(merchantId: any, serviceId: any, lang: any): Promise<any>;
     deleteOneById(merchantId: any, serviceId: any, lang: any): Promise<any>;
-    updateService(merchantId: any, service: ServiceUpdate, image?: any): Promise<void>;
+    updateService(merchantId: any, service: ServiceUpdate, lang: any, image?: any): Promise<any>;
 }
