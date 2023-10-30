@@ -12,6 +12,7 @@ export class ServiceService {
   public async createService(serviceData: ServiceInterface, lang: any, image?: any): Promise<ServiceInterface> {
     const { name, price, merchant_id, categoryId, isActive } = serviceData;
     const { rows } = await pg.query(`Select * from service where merchant_id=$1 and category_id=$2 and deleted = false`, [merchant_id, categoryId]);
+    console.log(rows[0]);
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
     const newActive = isActive || false;
     const { rows: service } = await pg.query(
