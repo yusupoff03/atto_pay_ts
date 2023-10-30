@@ -71,7 +71,6 @@ where merchant_id = $2 and deleted = false`,
         });
       });
     }
-    console.log(services);
     return services;
   }
   public async getOneById(merchantId, serviceId, lang): Promise<any> {
@@ -101,7 +100,7 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
     );
     return message[lang];
   }
-  public async updateService(merchantId, service: ServiceUpdate, image?: any): Promise<void> {
+  public async updateService(merchantId, service: ServiceUpdate, lang, image?: any): Promise<any> {
     const { rows } = await pg.query(`Select * from service where merchant_id = $1 and id = $2`, [merchantId, service.id]);
     if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');
 
@@ -109,7 +108,6 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
     const categoryId = service.categoryId || rows[0].category_id;
     const price = service.price || rows[0].price;
     const isActive = service.isActive || rows[0].is_active;
-    console.log(rows[0].image_url);
     if (image || service.deleteImage) {
       await this.fileUploader.deleteFile(`${rows[0].image_url}`);
       if (image) {
@@ -119,12 +117,10 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
         await pg.query(`Update service set image_url = $1 where id = $2`, [null, service.id]);
       }
     }
-    await pg.query(`Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5`, [
-      name,
-      price,
-      categoryId,
-      isActive,
-      service.id,
-    ]);
+    const { rows: message } = await pg.query(
+      `Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5 returning (select message from message where name = 'SERVICE_UPDATED')`,
+      [name, price, categoryId, isActive, service.id],
+    );
+    return message[0].message[lang];
   }
 }

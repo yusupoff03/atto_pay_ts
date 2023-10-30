@@ -13,7 +13,6 @@ export class MerchantController {
   public getMerchantProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);
-      console.log(merchantId);
       const merchant: Merchant = await this.merchant.getMerchantById(merchantId);
       delete merchant.hashed_password;
       res.status(200).json(merchant);
@@ -46,8 +45,6 @@ export class MerchantController {
 
   private getMerchantId = async (req: Request): Promise<string> => {
     const token: string = req.headers.authorization;
-    console.log(token);
-    // const token: string = cookie.replace(/"/g, '');
     const decodedToken = verify(token, SECRET_KEY) as DataStoredInToken;
     if (decodedToken.role) {
       return String(decodedToken.id);

@@ -43,7 +43,7 @@ export class ServiceController {
       const service: ServiceInterface = req.body;
       const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
       service.merchant_id = merchantId;
-      const message = await this.service.createService(service, req.files?.image, lang);
+      const message = await this.service.createService(service, lang, req.files?.image);
       res.status(201).json({
         success: true,
         message,
@@ -79,10 +79,12 @@ export class ServiceController {
   public editService = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
       const serviceUpdate: ServiceUpdate = req.body;
-      await this.service.updateService(merchantId, serviceUpdate, req.files?.image);
+      const message = await this.service.updateService(merchantId, serviceUpdate, lang, req.files?.image);
       res.status(200).json({
         success: true,
+        message,
       });
     } catch (error) {
       next(error);

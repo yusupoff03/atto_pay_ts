@@ -6,6 +6,7 @@ import { HttpException } from '@exceptions/httpException';
 
 export const ErrorMiddleware = async (error: HttpException | CustomError, req: Request, res: Response, next: NextFunction) => {
   const isDevenv = process.env.NODE_ENV === 'development';
+  console.log(error);
   try {
     const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
     const { rows: errorObject } = await pg.query<{ message: string; http_code: number }>(

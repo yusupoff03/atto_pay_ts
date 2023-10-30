@@ -28,7 +28,7 @@ export class CardsController {
     try {
       const customer_id = this.getCustomerId(req);
       const cards: Card[] = await this.card.getCustomerCards(String(customer_id));
-      res.status(201).json({ cards, length: cards.length });
+      res.status(201).json({ cards, count: cards.length });
     } catch (error) {
       next(error);
     }
@@ -37,8 +37,9 @@ export class CardsController {
     try {
       const customerId = this.getCustomerId(req);
       const cardUpdateDto: CardUpdateDto = req.body;
-      const card: Card = await this.card.updateCard(String(customerId), cardUpdateDto);
-      res.status(201).json({ success: true });
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = await this.card.updateCard(String(customerId), cardUpdateDto, lang);
+      res.status(201).json({ success: true, message });
     } catch (error) {
       next(error);
     }
@@ -47,9 +48,9 @@ export class CardsController {
     try {
       const customerId = this.getCustomerId(req);
       const { id } = req.body;
-      const deleteCard: boolean = await this.card.deleteCard(String(customerId), id);
-
-      res.status(202).json({ success: deleteCard, message: 'Card deleted' });
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = await this.card.deleteCard(String(customerId), id, lang);
+      res.status(202).json({ success: true, message });
     } catch (error) {
       next(error);
     }
@@ -75,8 +76,7 @@ export class CardsController {
   };
   private getCustomerId = (req: Request): string => {
     const cookie = req.headers.authorization;
-    const token = cookie.replace(/"/g, '');
-    const decodedToken = verify(token, SECRET_KEY) as DataStoredInToken;
+    const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;
     return String(decodedToken.id);
   };
 }
