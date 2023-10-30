@@ -63,6 +63,7 @@ category_id int not null references service_category(id),
 name varchar(64) not null,
 price int not null,
 image_url varchar(256),
+public_key varchar(16) unique not null,
 is_active boolean not null default false,
 deleted boolean not null default false
 );

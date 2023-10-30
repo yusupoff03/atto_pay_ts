@@ -6,6 +6,8 @@ const typedi_1 = require("typedi");
 const _database_1 = tslib_1.__importDefault(require("../database"));
 const imageStorage_1 = require("../utils/imageStorage");
 const CustomError_1 = require("../exceptions/CustomError");
+const base64url_1 = tslib_1.__importDefault(require("base64url"));
+const crypto = tslib_1.__importStar(require("crypto"));
 let ServiceService = class ServiceService {
     constructor() {
         this.fileUploader = new imageStorage_1.FileUploader('eu-north-1', 'image-24');
@@ -17,7 +19,8 @@ let ServiceService = class ServiceService {
         if (rows[0])
             throw new CustomError_1.CustomError('SERVICE_ALREADY_EXISTS');
         const newActive = isActive || false;
-        const { rows: service } = await _database_1.default.query(`INSERT INTO service(name,price,merchant_id,category_id,is_active) values ($1,$2,$3,$4,$5) RETURNING (select message from message where name = 'SERVICE_CREATED')`, [name, price, merchant_id, categoryId, newActive]);
+        const public_key = (0, base64url_1.default)(crypto.randomBytes(16));
+        const { rows: service } = await _database_1.default.query(`INSERT INTO service(name,price,merchant_id,category_id,is_active,public_key) values ($1,$2,$3,$4,$5,$6) RETURNING (select message from message where name = 'SERVICE_CREATED')`, [name, price, merchant_id, categoryId, newActive, public_key]);
         if (image) {
             const uploadPath = await this.fileUploader.uploadFile(image, `${service[0].id}.${image.name.split('.').pop()}`);
             if (uploadPath)

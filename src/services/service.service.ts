@@ -3,6 +3,9 @@ import pg from '@database';
 import { ServiceInterface, ServiceUpdate } from '@interfaces/service.interface';
 import { FileUploader } from '@utils/imageStorage';
 import { CustomError } from '@exceptions/CustomError';
+import base64url, { Base64Url } from 'base64url';
+import * as crypto from 'crypto';
+
 @Service()
 export class ServiceService {
   private fileUploader;
@@ -15,9 +18,10 @@ export class ServiceService {
     console.log(rows[0]);
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
     const newActive = isActive || false;
+    const public_key = base64url(crypto.randomBytes(16));
     const { rows: service } = await pg.query(
-      `INSERT INTO service(name,price,merchant_id,category_id,is_active) values ($1,$2,$3,$4,$5) RETURNING (select message from message where name = 'SERVICE_CREATED')`,
-      [name, price, merchant_id, categoryId, newActive],
+      `INSERT INTO service(name,price,merchant_id,category_id,is_active,public_key) values ($1,$2,$3,$4,$5,$6) RETURNING (select message from message where name = 'SERVICE_CREATED')`,
+      [name, price, merchant_id, categoryId, newActive, public_key],
     );
     if (image) {
       const uploadPath = await this.fileUploader.uploadFile(image, `${service[0].id}.${image.name.split('.').pop()}`);
