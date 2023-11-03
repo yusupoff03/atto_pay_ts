@@ -83,7 +83,6 @@ export class CustomerService {
   }
   public async deleteCustomer(customerId: string): Promise<boolean> {
     try {
-      console.log(`Deleting customer with ID: ${customerId}`);
       const { rows: findCustomer } = await pg.query(
         `
           SELECT EXISTS(

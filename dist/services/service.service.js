@@ -20,6 +20,7 @@ let ServiceService = class ServiceService {
             throw new CustomError_1.CustomError('SERVICE_ALREADY_EXISTS');
         const newActive = isActive || false;
         const public_key = (0, base64url_1.default)(crypto.randomBytes(16));
+        console.log(public_key);
         const { rows: service } = await _database_1.default.query(`INSERT INTO service(name,price,merchant_id,category_id,is_active,public_key) values ($1,$2,$3,$4,$5,$6) RETURNING (select message from message where name = 'SERVICE_CREATED')`, [name, price, merchant_id, categoryId, newActive, public_key]);
         if (image) {
             const uploadPath = await this.fileUploader.uploadFile(image, `${service[0].id}.${image.name.split('.').pop()}`);
@@ -115,6 +116,26 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`, [serviceId, merch
         }
         const { rows: message } = await _database_1.default.query(`Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5 returning (select message from message where name = 'SERVICE_UPDATED')`, [name, price, categoryId, isActive, service.id]);
         return message[0].message[lang];
+    }
+    async getOneByQr(key) {
+        const { rows } = await _database_1.default.query(`Select id, is_active from service where public_key = $1`, [key]);
+        if (!rows[0])
+            throw new CustomError_1.CustomError('SERVICE_NOT_FOUND');
+        if (!rows[0].is_active)
+            throw new CustomError_1.CustomError('SERVICE_NOT_ACTIVE');
+        console.log(rows[0].id);
+        return rows[0].id;
+    }
+    async getOnePublicById(id, lang) {
+        const { rows } = await _database_1.default.query(`select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url,
+  c.code as category_code, c.name -> $2 as category_name
+from service s
+JOIN service_category c on s.category_id = c.id
+where s.id = $1 and s.deleted = false and s.is_active = true`, [id, lang]);
+        if (!rows[0])
+            throw new CustomError_1.CustomError('SERVICE_NOT_FOUND');
+        rows[0].image_url = imageStorage_1.FileUploader.getUrl(rows[0].image_url);
+        return rows[0];
     }
 };
 ServiceService = tslib_1.__decorate([

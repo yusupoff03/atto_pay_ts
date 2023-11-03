@@ -4,8 +4,13 @@ import pg from '@database';
 import { HttpException } from '@exceptions/httpException';
 import { Merchant } from '@interfaces/merchant.interface';
 import { CustomError } from '@exceptions/CustomError';
+import RedisClient from '@/database/redis';
 @Service()
 export class MerchantService {
+  private redis: RedisClient;
+  constructor() {
+    this.redis = new RedisClient();
+  }
   public async getMerchantById(merchantId: string): Promise<Merchant> {
     const { rows, rowCount } = await pg.query(`Select * from merchant where id=$1`, [merchantId]);
     if (!rowCount) {

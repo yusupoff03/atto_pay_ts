@@ -20,7 +20,16 @@ export class TransactionService {
     return transfer_id;
   }
 
-  public async getTransactions(customerId: string, offset: any, fromDate: any, toDate: any, byCardId: any, byServiceId: any): Promise<any> {
+  public async getTransactions(
+    customerId: string,
+    offset: any,
+    fromDate: any,
+    toDate: any,
+    byCardId: any,
+    byServiceId: any,
+    page,
+    limit,
+  ): Promise<any> {
     let transactions;
     fromDate = moment(fromDate, 'DD/MM/YYYY').startOf('day').add(offset, 'hours').toISOString();
     toDate = moment(toDate, 'DD/MM/YYYY').endOf('day').add(offset, 'hours').toISOString();

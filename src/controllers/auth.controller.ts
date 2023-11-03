@@ -14,8 +14,7 @@ export class AuthController {
       const customerData: Customer = req.body;
       const trust: boolean = req.body.trust || false;
       const uid: string = req.headers['x-device-id'] as string;
-      const { cookie, token, customer } = await this.auth.signup(customerData, trust, uid);
-      res.setHeader('Set-Cookie', [cookie]);
+      const { token, customer } = await this.auth.signup(customerData, trust, uid);
       res.status(201).json({ token: token, data: customer, message: 'signup' });
     } catch (error) {
       next(error);
@@ -61,18 +60,30 @@ export class AuthController {
   public signUpMerchant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantData: Merchant = req.body;
-      const { cookie, tokenData, merchant } = await this.auth.signUpMerchant(merchantData);
-      res.setHeader('Set-Cookie', [cookie]);
+      const newEmail = merchantData.email.toLowerCase();
+      const { code } = req.body;
+      const { tokenData, merchant } = await this.auth.signUpMerchant(merchantData, newEmail, code);
       res.status(201).json({ token: tokenData.token, data: merchant });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public sendCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { email, resend } = req.body;
+      const newEmail = email.toLowerCase();
+      await this.auth.sendCode(newEmail, resend);
+      res.status(200).json({ success: true });
     } catch (error) {
       next(error);
     }
   };
   public loginMerchant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const merchantData: Merchant = req.body;
-      const { merchant, cookie, tokenData } = await this.auth.loginMerchant(merchantData);
-      res.setHeader('Set-Cookie', cookie);
+      const { email, password } = req.body;
+      const newEmail = email.toLowerCase();
+      const deviceId = req.headers['x-device-id'] as string;
+      const { merchant, tokenData } = await this.auth.loginMerchant(newEmail, password, deviceId);
       res.status(200).json({ token: tokenData.token, merchant: merchant });
     } catch (error) {
       next(error);

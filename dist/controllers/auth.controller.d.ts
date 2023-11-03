@@ -8,5 +8,6 @@ export declare class AuthController {
     getCustomerLoginType: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     logOut: (req: RequestWithCustomer, res: Response, next: NextFunction) => Promise<void>;
     signUpMerchant: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    sendCode: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     loginMerchant: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }

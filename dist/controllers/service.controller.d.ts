@@ -8,6 +8,8 @@ export declare class ServiceController {
     getAllServices: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     getOneById: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     editService: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    getOneByQR: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    getOnePublicById: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     private getMerchantId;
     private getCustomerId;
 }

@@ -8,4 +8,6 @@ export declare class ServiceService {
     getOneById(merchantId: any, serviceId: any, lang: any): Promise<any>;
     deleteOneById(merchantId: any, serviceId: any, lang: any): Promise<any>;
     updateService(merchantId: any, service: ServiceUpdate, lang: any, image?: any): Promise<any>;
+    getOneByQr(key: any): Promise<any>;
+    getOnePublicById(id: any, lang: any): Promise<any>;
 }

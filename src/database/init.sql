@@ -63,7 +63,7 @@ category_id int not null references service_category(id),
 name varchar(64) not null,
 price int not null,
 image_url varchar(256),
-public_key varchar(16) unique not null,
+public_key varchar(64) unique not null,
 is_active boolean not null default false,
 deleted boolean not null default false
 );
@@ -352,7 +352,8 @@ insert into message(name, message, http_code) values
 ('SERVICE_UPDATED', '{"en": "Service updated successfully", "uz": "Xizmat muvaffaqiyatli yangilandi", "ru": "Услуга успешно обновлена"}', 200),
 ('SERVICE_DELETED', '{"en": "Service deleted successfully", "uz": "Xizmat muvaffaqiyatli o''chirildi", "ru": "Услуга успешно удалена"}', 200),
 ('PAYMENT_SUCCESS', '{"en": "Payment successful", "uz": "To''lov muvaffaqiyatli amalga oshirildi", "ru": "Оплата прошла успешно"}', 200),
-('TRANSFER_SUCCESS', '{"en": "Money transferred successfully", "uz": "Pul muvaffaqiyatli o''tkazildi", "ru": "Деньги успешно переведены"}', 200)
+('TRANSFER_SUCCESS', '{"en": "Money transferred successfully", "uz": "Pul muvaffaqiyatli o''tkazildi", "ru": "Деньги успешно переведены"}', 200),
+('CODE_ALREADY_SENT', '{"en": "Verification code already sent", "uz": "Tasdiqlash kodi allaqachon yuborilgan", "ru": "Код подтверждения уже отправлен"}', 409)
 on conflict do nothing;
 
 insert into service_category(code, name) values

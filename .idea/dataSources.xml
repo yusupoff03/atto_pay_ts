@@ -29,5 +29,12 @@
       <jdbc-url>jdbc:postgresql://ep-nameless-disk-65881682-pooler.eu-central-1.postgres.vercel-storage.com:5432/atto_pay</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="Redis" uuid="09865b12-96a5-48ed-aca2-4e50de791de0">
+      <driver-ref>redis</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>jdbc.RedisDriver</jdbc-driver>
+      <jdbc-url>redis://default:871bcbfae7524f79b0c553b102ecfd36@first-kid-32082.kv.vercel-storage.com:32082</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

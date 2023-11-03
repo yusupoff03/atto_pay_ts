@@ -75,7 +75,6 @@ let CustomerService = class CustomerService {
     }
     async deleteCustomer(customerId) {
         try {
-            console.log(`Deleting customer with ID: ${customerId}`);
             const { rows: findCustomer } = await _database_1.default.query(`
           SELECT EXISTS(
                    SELECT "id"

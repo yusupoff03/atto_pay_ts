@@ -33,7 +33,7 @@ let CurrencyService = class CurrencyService {
         if (!rows[0].exists) {
             throw new httpException_1.HttpException(404, 'Currency not found');
         }
-        _database_1.default.query(`delete from currency where id=$1`, [id]);
+        await _database_1.default.query(`delete from currency where id=$1`, [id]);
         return true;
     }
     async getCurrencyById(id) {

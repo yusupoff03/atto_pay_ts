@@ -31,7 +31,7 @@ export class CurrencyService {
     if (!rows[0].exists) {
       throw new HttpException(404, 'Currency not found');
     }
-    pg.query(`delete from currency where id=$1`, [id]);
+    await pg.query(`delete from currency where id=$1`, [id]);
     return true;
   }
   public async getCurrencyById(id: string) {

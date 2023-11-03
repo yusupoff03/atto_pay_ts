@@ -37,8 +37,8 @@ export class TransactionController {
   public getCustomerTransactions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerId = await this.getCustomerId(req);
-      const { offset, fromDate, toDate, byCardId = null, byServiceId = null } = req.body;
-      const transactions = await this.transaction.getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId);
+      const { offset, fromDate, toDate, byCardId = null, byServiceId = null, page, limit } = req.body;
+      const transactions = await this.transaction.getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId, page, limit);
       res.status(200).json({ length: transactions.length, transactions });
     } catch (error) {
       next(error);

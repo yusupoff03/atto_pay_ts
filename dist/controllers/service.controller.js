@@ -97,6 +97,27 @@ class ServiceController {
                 next(error);
             }
         };
+        this.getOneByQR = async (req, res, next) => {
+            try {
+                const { key } = req.params;
+                const id = await this.service.getOneByQr(key);
+                res.status(200).json({ id: id });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.getOnePublicById = async (req, res, next) => {
+            try {
+                const { id } = req.params;
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+                const service = await this.service.getOnePublicById(id, lang);
+                res.status(200).json(service);
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.getMerchantId = async (req) => {
             const token = req.headers.authorization;
             const decodedToken = (0, jsonwebtoken_1.verify)(token, _config_1.SECRET_KEY);

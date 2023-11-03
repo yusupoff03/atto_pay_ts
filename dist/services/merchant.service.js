@@ -7,7 +7,11 @@ const typedi_1 = require("typedi");
 const _database_1 = tslib_1.__importDefault(require("../database"));
 const httpException_1 = require("../exceptions/httpException");
 const CustomError_1 = require("../exceptions/CustomError");
+const redis_1 = tslib_1.__importDefault(require("../database/redis"));
 let MerchantService = class MerchantService {
+    constructor() {
+        this.redis = new redis_1.default();
+    }
     async getMerchantById(merchantId) {
         const { rows, rowCount } = await _database_1.default.query(`Select * from merchant where id=$1`, [merchantId]);
         if (!rowCount) {
@@ -51,7 +55,8 @@ let MerchantService = class MerchantService {
     }
 };
 MerchantService = tslib_1.__decorate([
-    (0, typedi_1.Service)()
+    (0, typedi_1.Service)(),
+    tslib_1.__metadata("design:paramtypes", [])
 ], MerchantService);
 exports.MerchantService = MerchantService;
 //# sourceMappingURL=merchant.service.js.map

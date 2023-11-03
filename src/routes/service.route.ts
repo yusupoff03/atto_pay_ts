@@ -14,6 +14,8 @@ export class ServiceRoute implements Routes {
   private initializeRoutes() {
     this.router.get(`${this.path}/merchant`, AuthMiddleware, this.service.getMerchantServices);
     this.router.get(`${this.path}`, AuthMiddleware, this.service.getAllServices);
+    this.router.get(`${this.path}/qr/:key`, this.service.getOneByQR);
+    this.router.get(`${this.path}/public/:id`, this.service.getOnePublicById);
     this.router.get(`${this.path}/:id`, AuthMiddleware, this.service.getOneById);
     this.router.delete(`${this.path}`, AuthMiddleware, this.service.deleteOneById);
     this.router.put(`${this.path}`, AuthMiddleware, this.service.editService);

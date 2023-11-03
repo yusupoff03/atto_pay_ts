@@ -9,7 +9,6 @@ import { HttpException } from '@exceptions/httpException';
 
 export class MerchantController {
   public merchant = Container.get(MerchantService);
-
   public getMerchantProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);
@@ -42,7 +41,6 @@ export class MerchantController {
       next(error);
     }
   };
-
   private getMerchantId = async (req: Request): Promise<string> => {
     const token: string = req.headers.authorization;
     const decodedToken = verify(token, SECRET_KEY) as DataStoredInToken;

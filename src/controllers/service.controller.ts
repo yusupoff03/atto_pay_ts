@@ -90,6 +90,25 @@ export class ServiceController {
       next(error);
     }
   };
+  public getOneByQR = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { key } = req.params;
+      const id = await this.service.getOneByQr(key);
+      res.status(200).json({ id: id });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public getOnePublicById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const service = await this.service.getOnePublicById(id, lang);
+      res.status(200).json(service);
+    } catch (error) {
+      next(error);
+    }
+  };
   private getMerchantId = async (req: Request): Promise<string> => {
     const token: string = req.headers.authorization;
     const decodedToken = verify(token, SECRET_KEY) as DataStoredInToken;

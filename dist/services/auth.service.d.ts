@@ -6,7 +6,6 @@ export declare class AuthService {
     constructor();
     signup(customerData: Customer, trust: boolean, uid?: string): Promise<{
         customer: Customer;
-        cookie: string;
         token: string;
     }>;
     login(CustomerData: CustomerLogin, deviceId: any): Promise<{
@@ -18,13 +17,12 @@ export declare class AuthService {
         otp: boolean;
     }>;
     logout(customerData: Customer): Promise<Customer>;
-    signUpMerchant(merchant: Merchant): Promise<{
+    signUpMerchant(merchant: Merchant, email: any, code: any): Promise<{
         tokenData: TokenData;
-        cookie: string;
         merchant: any;
     }>;
-    loginMerchant(merchant: Merchant): Promise<{
-        cookie: string;
+    sendCode(email: any, resend: any): Promise<void>;
+    loginMerchant(email: any, password: any, deviceId: any): Promise<{
         tokenData: TokenData;
         merchant: any;
     }>;

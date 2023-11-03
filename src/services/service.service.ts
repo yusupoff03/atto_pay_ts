@@ -19,6 +19,7 @@ export class ServiceService {
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
     const newActive = isActive || false;
     const public_key = base64url(crypto.randomBytes(16));
+    console.log(public_key);
     const { rows: service } = await pg.query(
       `INSERT INTO service(name,price,merchant_id,category_id,is_active,public_key) values ($1,$2,$3,$4,$5,$6) RETURNING (select message from message where name = 'SERVICE_CREATED')`,
       [name, price, merchant_id, categoryId, newActive, public_key],
@@ -127,5 +128,25 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
       [name, price, categoryId, isActive, service.id],
     );
     return message[0].message[lang];
+  }
+  public async getOneByQr(key): Promise<any> {
+    const { rows } = await pg.query(`Select id, is_active from service where public_key = $1`, [key]);
+    if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');
+    if (!rows[0].is_active) throw new CustomError('SERVICE_NOT_ACTIVE');
+    console.log(rows[0].id);
+    return rows[0].id;
+  }
+  public async getOnePublicById(id, lang): Promise<any> {
+    const { rows } = await pg.query(
+      `select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url,
+  c.code as category_code, c.name -> $2 as category_name
+from service s
+JOIN service_category c on s.category_id = c.id
+where s.id = $1 and s.deleted = false and s.is_active = true`,
+      [id, lang],
+    );
+    if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');
+    rows[0].image_url = FileUploader.getUrl(rows[0].image_url);
+    return rows[0];
   }
 }

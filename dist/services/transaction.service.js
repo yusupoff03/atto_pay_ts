@@ -23,7 +23,7 @@ let TransactionService = class TransactionService {
         }
         return transfer_id;
     }
-    async getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId) {
+    async getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId, page, limit) {
         let transactions;
         fromDate = (0, moment_1.default)(fromDate, 'DD/MM/YYYY').startOf('day').add(offset, 'hours').toISOString();
         toDate = (0, moment_1.default)(toDate, 'DD/MM/YYYY').endOf('day').add(offset, 'hours').toISOString();
