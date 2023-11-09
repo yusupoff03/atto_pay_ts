@@ -21,7 +21,7 @@ export declare class AuthService {
         tokenData: TokenData;
         merchant: any;
     }>;
-    sendCode(email: any, resend: any): Promise<void>;
+    sendCode(email: any, resend: any): Promise<any>;
     loginMerchant(email: any, password: any, deviceId: any): Promise<{
         tokenData: TokenData;
         merchant: any;

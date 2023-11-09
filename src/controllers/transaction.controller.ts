@@ -10,12 +10,16 @@ export class TransactionController {
 
   public pay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { serviceId, fromCardId } = req.body;
+      const { serviceId, fromCardId, amount, fields } = req.body;
       const customerId = await this.getCustomerId(req);
-      const paymentId = await this.transaction.payForService(customerId, serviceId, fromCardId);
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const { success_message, id } = await this.transaction.payForService(customerId, serviceId, fromCardId, amount, fields);
+      const message = success_message[lang];
+      console.log(success_message);
       res.status(200).json({
         success: true,
-        paymentId,
+        id,
+        message,
       });
     } catch (error) {
       next(error);
@@ -30,6 +34,17 @@ export class TransactionController {
         success: true,
         transferId,
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public transferMoney = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const customerId = await this.getCustomerId(req);
+      const { toCardPan, fromCardId, amount } = req.body;
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const { transfer_id, message } = await this.transaction.transferMoney(customerId, fromCardId, toCardPan, amount, lang);
+      res.status(200).json({ success: true, transfer_id, message });
     } catch (error) {
       next(error);
     }

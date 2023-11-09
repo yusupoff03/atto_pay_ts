@@ -18,28 +18,25 @@ export class MerchantService {
     }
     return rows[0];
   }
-  public async updateMerchant(merchantId: string, name: string, password: string): Promise<Merchant> {
+  public async updateMerchant(merchantId: string, name: string): Promise<Merchant> {
     const { rows: findMerchant } = await pg.query(
       `
                  SELECT *
                  FROM merchant
-                 WHERE "id" = $1
-                 )`,
+                 WHERE id = $1
+                 `,
       [merchantId],
     );
-    if (findMerchant[0].exists) throw new HttpException(409, "Merchant doesn't exist");
-    const hashedPassword = await hash(password, 10);
+    if (findMerchant[0].exists) throw new CustomError('USER_NOT_FOUND');
     const newName = name || findMerchant[0].name;
-    const newHashedPassword = hashedPassword || findMerchant[0].hashed_password;
     const { rows: updateMerchantData } = await pg.query(
       `
         UPDATE
           merchant
-        SET "email"    = $2,
-            "hashed_password" = $3
-        WHERE "id" = $1 RETURNING "phone", "hashed_password"
+        SET name = $2
+        WHERE id = $1
       `,
-      [merchantId, newName, newHashedPassword],
+      [merchantId, newName],
     );
 
     return updateMerchantData[0];

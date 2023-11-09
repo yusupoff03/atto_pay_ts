@@ -3,7 +3,7 @@ import { Container } from 'typedi';
 import { Customer, UpdateCustomerData } from '@interfaces/customers.interface';
 import { CustomerService } from '@services/customers.service';
 import { DataStoredInToken } from '@interfaces/auth.interface';
-import { POSTGRES_DB, SECRET_KEY } from '@config';
+import { SECRET_KEY } from '@config';
 import { verify } from 'jsonwebtoken';
 import { FileUploader } from '@utils/imageStorage';
 
@@ -13,7 +13,6 @@ export class CustomersController {
   public getCustomers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const findAllCustomersData: Customer[] = await this.customer.findAllCustomer();
-
       res.status(200).json({ data: findAllCustomersData, message: 'findAll' });
     } catch (error) {
       next(error);
@@ -33,8 +32,8 @@ export class CustomersController {
   public addServiceToSaved = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerId = this.getCustomerId(req);
-      const { serviceId } = req.body;
-      await this.customer.addToSaved(customerId, serviceId);
+      const { serviceId: id } = req.body;
+      await this.customer.addToSaved(customerId, id);
       res.status(200).json({
         success: true,
       });

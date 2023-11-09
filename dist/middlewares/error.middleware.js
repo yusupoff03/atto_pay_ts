@@ -5,14 +5,14 @@ const tslib_1 = require("tslib");
 const logger_1 = require("../utils/logger");
 const _database_1 = tslib_1.__importDefault(require("../database"));
 const ErrorMiddleware = async (error, req, res, next) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const isDevenv = process.env.NODE_ENV === 'development';
     console.log(error);
     try {
         const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
         const { rows: errorObject } = await _database_1.default.query(`SELECT message -> $2 AS message, http_code
        FROM message
-       WHERE name = $1`, [error.name.toUpperCase(), lang]);
+       WHERE name = $1`, [error.name, lang]);
         const status = ((_a = errorObject[0]) === null || _a === void 0 ? void 0 : _a.http_code) || 500;
         let message = ((_b = errorObject[0]) === null || _b === void 0 ? void 0 : _b.message) || 'Something went wrong';
         let info = error.info;
@@ -22,9 +22,15 @@ const ErrorMiddleware = async (error, req, res, next) => {
         switch (error.name) {
             case 'USER_BLOCKED': {
                 if (errorObject) {
-                    info = Object.assign(Object.assign({}, info), { message: errorObject[0].message });
+                    info = Object.assign(Object.assign({}, info), { message: errorObject[0].message, timeLeft: error.info });
                     message = errorObject[0].message.replace('{0}', ((_c = error.info) === null || _c === void 0 ? void 0 : _c.toString()) || '60');
                 }
+                break;
+            }
+            case 'VALIDATION_ERROR': {
+                info = Object.assign(Object.assign({}, info), { message: errorObject[0].message });
+                message = errorObject[0].message.replace(`{0}`, (_d = error.info) === null || _d === void 0 ? void 0 : _d.toString());
+                break;
             }
         }
         logger_1.logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}`);

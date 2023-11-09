@@ -7,7 +7,7 @@ export declare class CustomerService {
     updateCustomer(customerId: string, customerData: UpdateCustomerData, image: any): Promise<Customer>;
     deleteCustomer(customerId: string): Promise<boolean>;
     getOtp(phone: string): Promise<string>;
-    addToSaved(customerId: string, serviceId: any): Promise<void>;
+    addToSaved(customerId: string, serviceId: string): Promise<void>;
     deleteFromSaved(customerId: string, serviceId: any): Promise<void>;
     updateCustomerLang(customerId: string, lang: string): Promise<boolean>;
 }

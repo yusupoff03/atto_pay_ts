@@ -5,7 +5,7 @@ const typedi_1 = require("typedi");
 const merchant_service_1 = require("../services/merchant.service");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const _config_1 = require("../config");
-const httpException_1 = require("../exceptions/httpException");
+const CustomError_1 = require("../exceptions/CustomError");
 class MerchantController {
     constructor() {
         this.merchant = typedi_1.Container.get(merchant_service_1.MerchantService);
@@ -23,8 +23,8 @@ class MerchantController {
         this.updateMerchant = async (req, res, next) => {
             try {
                 const merchantId = await this.getMerchantId(req);
-                const { name, password } = req.body;
-                const updateMerchantData = await this.merchant.updateMerchant(merchantId, name, password);
+                const { name } = req.body;
+                const updateMerchantData = await this.merchant.updateMerchant(merchantId, name);
                 res.status(200).json({
                     data: updateMerchantData,
                 });
@@ -50,7 +50,7 @@ class MerchantController {
             if (decodedToken.role) {
                 return String(decodedToken.id);
             }
-            throw new httpException_1.HttpException(403, 'You dont have access to this recourse');
+            throw new CustomError_1.CustomError('MISSING_TOKEN');
         };
     }
 }

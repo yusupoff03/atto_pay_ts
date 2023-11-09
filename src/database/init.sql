@@ -56,16 +56,23 @@ code varchar(64) not null unique,
 name jsonb not null
 );
 
-create table if not exists service(
+create table if not exists service (
 id uuid primary key default uuid_generate_v4(),
 merchant_id uuid not null references merchant(id),
 category_id int not null references service_category(id),
 name varchar(64) not null,
-price int not null,
 image_url varchar(256),
-public_key varchar(64) unique not null,
 is_active boolean not null default false,
+public_key varchar(64) not null unique,
 deleted boolean not null default false
+);
+create table if not exists service_field (
+id uuid primary key default uuid_generate_v4(),
+service_id uuid not null references service(id),
+name varchar(64) not null,
+type varchar(16) not null,
+order_num int default 0,
+constraint unique_service_field unique(service_id, name)
 );
 create table if not exists message(
 name varchar(64) not null unique,
@@ -77,21 +84,76 @@ customer_id uuid not null references customer(id),
 service_id uuid not null references service(id),
 constraint unique_customer_service unique(customer_id, service_id)
 );
-create table if not exists transactions (
+create table if not exists transfer (
 id uuid primary key default uuid_generate_v4(),
 owner_id uuid not null,
 type varchar(16) not null,
-action varchar(16) not null,
 amount int not null,
 created_at timestamp not null default now(),
-sender jsonb,
-receiver jsonb
+sender_pan varchar(16),
+sender_id uuid,
+receiver_pan varchar(16),
+receiver_id uuid
+);
+create table if not exists payment (
+id uuid primary key default uuid_generate_v4(),
+owner_id uuid not null,
+type varchar(16) not null,
+amount int not null,
+created_at timestamp not null default now(),
+sender_id uuid not null,
+receiver_id uuid not null,
+fields jsonb
 );
 create or replace function mask_credit_card(pan varchar(16))
 returns varchar(16) as $$
   begin return concat(left(pan,6),'******',right(pan,4));
     end;
   $$ language plpgsql;
+-- creates new service with fields
+create or replace procedure create_service(
+  _merchant_id uuid,
+  _category_id int,
+  _name varchar(64),
+  _is_active boolean,
+  _public_key varchar(64),
+  _fields jsonb,
+  out error_code varchar(64),
+  out error_message text,
+  out success_message jsonb
+) as $$
+declare
+  service_id uuid;
+begin
+  begin
+    insert into service (merchant_id, category_id, name, is_active, public_key)
+    values (_merchant_id, _category_id, _name, _is_active, _public_key)
+    returning id into service_id;
+
+    begin
+      for i in 0..jsonb_array_length(_fields) - 1 loop
+          insert into service_field (service_id, name, type, order_num)
+          values (service_id, _fields->i->>'name', _fields->i->>'type', (_fields->i->>'order')::int);
+        end loop;
+    exception
+      when unique_violation then
+        rollback;
+        error_code := 'SAME_FIELD_NAME';
+        return;
+    end;
+
+    select message from message where name = 'SERVICE_CREATED' into success_message;
+  exception
+    when others then
+      rollback;
+      error_code := 'DATABASE_ERROR';
+      error_message := sqlerrm;
+      return;
+  end;
+
+  commit;
+end;
+$$ language plpgsql;
 create or replace procedure delete_card(
   _card_id uuid,
   _customer_id uuid,
@@ -122,19 +184,31 @@ create or replace procedure pay_for_service(
   _customer_id uuid,
   _card_id uuid,
   _service_id uuid,
+  _amount int,
+  _details jsonb,
   out payment_id uuid,
   out error_code varchar(64),
-  out error_message text
+  out error_message text,
+  out success_message jsonb
 )
 as $$
 declare
   service_row service;
   card_row customer_card;
+  merchant_row merchant;
+  service_fields jsonb := '[]';
+  details jsonb := '{}';
+  key_exists boolean := false;
 begin
   begin
     select * into service_row from service where id = _service_id and deleted = false;
     if not found then
       error_code := 'SERVICE_NOT_FOUND';
+      return;
+    end if;
+
+    if not service_row.is_active then
+      error_code := 'SERVICE_NOT_ACTIVE';
       return;
     end if;
 
@@ -144,20 +218,44 @@ begin
       return;
     end if;
 
-    if card_row.balance < service_row.price then
+    if card_row.balance < _amount then
       error_code := 'INSUFFICIENT_FUNDS';
       return;
     end if;
 
-    insert into transactions (owner_id, type, action, amount, sender, receiver)
-    values (_customer_id, 'expense', 'payment', service_row.price, jsonb_build_object('id', card_row.id), jsonb_build_object('id', _service_id))
+    -- save service_field names
+    select jsonb_agg(jsonb_build_object('id', id, 'name', name)) into service_fields from service_field where service_id = _service_id;
+
+    -- loop service_fields and check if all required fields are provided, then add them to details
+    if jsonb_array_length(service_fields) > 0 then
+      for i in 0..jsonb_array_length(service_fields) - 1 loop
+          -- key_exists variable
+          select exists(select 1 from jsonb_each(_details) where key = service_fields->i->>'id') into key_exists;
+
+          if not key_exists then
+            error_code := 'VALIDATION_ERROR';
+            error_message := service_fields;
+            return;
+          end if;
+
+          -- add service_fields to details
+          if key_exists then
+            details := details || jsonb_build_object(service_fields->i->>'id', _details->(service_fields->i->>'id'));
+          end if;
+        end loop;
+    end if;
+
+    insert into payment (owner_id, type, amount, sender_id, receiver_id, fields)
+    values (_customer_id, 'expense', _amount, card_row.id, _service_id, details)
     returning id into payment_id;
 
-    insert into transactions (owner_id, type, action, amount, sender, receiver)
-    values (service_row.merchant_id, 'income', 'payment', service_row.price, jsonb_build_object('id', _customer_id), jsonb_build_object('id', _service_id));
+    insert into payment (owner_id, type, amount, sender_id, receiver_id, fields)
+    values (service_row.merchant_id, 'income', _amount, _customer_id, _service_id, details);
 
-    update customer_card set balance = balance - service_row.price where id = _card_id;
-    update merchant set balance = balance + service_row.price where id = service_row.merchant_id;
+    update customer_card set balance = balance - _amount where id = _card_id;
+    update merchant set balance = balance + _amount where id = service_row.merchant_id;
+
+    select message from message where name = 'PAYMENT_SUCCESS' into success_message;
   exception
     when others then
       rollback;
@@ -219,6 +317,7 @@ begin
   commit;
 end;
 $$ language plpgsql;
+
 create or replace procedure transfer_money(
   _customer_id uuid,
   _from_card_id uuid,
@@ -226,90 +325,121 @@ create or replace procedure transfer_money(
   _amount int,
   out transfer_id uuid,
   out error_code varchar(64),
-  out error_message text
-)
-as $$
-  DECLARE
-    sender_card customer_card;
-    receiver_card customer_card;
-    begin
-     begin
-      select * into sender_card from customer_card where id = _from_card_id and customer_id = _customer_id;
-      if not FOUND then
-        error_code:= 'CARD_NOT_FOUND';
-        return;
-      end if;
-      select * into receiver_card from customer_card where pan = _to_pan;
-      if not FOUND then
-        error_code:= 'CARD_NOT_FOUND';
-      end if;
-      if sender_card.balance < _amount then
-        error_code:= 'INSUFFICIENT_FUNDS';
-      end if;
-    insert into transactions(owner_id, type, action, amount, sender, receiver)
-    VALUES (_customer_id,'expense','transfer',_amount,jsonb_build_object('id',sender_card.id),jsonb_build_object('pan',receiver_card.pan,'customer_id',receiver_card.customer_id));
-    insert into transactions(owner_id, type, action, amount, sender, receiver)
-      VALUES(receiver_card.customer_id,'income','transfer',_amount,jsonb_build_object('pan',sender_card.pan,'customer_id',sender_card.customer_id),jsonb_build_object('id',receiver_card.id));
-     update customer_card set balance = balance - _amount where id = sender_card.id;
-      update customer_card set balance = balance + _amount where id = receiver_card.id;
-      exception
-     when others then
-       rollback;
-       error_code := 'TRANSACTION_ERROR';
-       error_message := sqlerrm;
-       return;
+  out error_message text,
+  out success_message jsonb
+) as $$
+declare
+sender_card customer_card;
+  receiver_card customer_card;
+begin
+begin
+select * into sender_card from customer_card where id = _from_card_id and customer_id = _customer_id;
+if not found then
+      error_code := 'CARD_NOT_FOUND';
+      return;
+end if;
+
+select * into receiver_card from customer_card where pan = _to_pan;
+if not found then
+      error_code := 'CARD_NOT_FOUND';
+      return;
+end if;
+
+    if sender_card.id = receiver_card.id then
+      error_code := 'SAME_CARD';
+      return;
+end if;
+
+    if sender_card.balance < _amount then
+      error_code := 'INSUFFICIENT_FUNDS';
+      return;
+end if;
+
+insert into transfer (owner_id, type, amount, sender_id, receiver_pan, receiver_id)
+values (_customer_id, 'expense', _amount, _from_card_id, receiver_card.pan, receiver_card.customer_id)
+  returning id into transfer_id;
+
+insert into transfer (owner_id, type, amount, sender_pan, sender_id, receiver_id)
+values (receiver_card.customer_id, 'income', _amount, sender_card.pan, sender_card.customer_id, receiver_card.id);
+
+update customer_card set balance = balance - _amount where id = sender_card.id;
+update customer_card set balance = balance + _amount where id = receiver_card.id;
+
+select message from message where name = 'TRANSFER_SUCCESS' into success_message;
+exception
+    when others then
+      rollback;
+      error_code := 'TRANSACTION_ERROR';
+      error_message := sqlerrm;
+      return;
 end;
 
 commit;
-  end;
-    $$ language plpgsql;
+end;
+$$ language plpgsql;
 create or replace function get_transactions(
   _customer_id uuid,
   _from timestamp,
   _to timestamp,
+  _page int default 1,
+  _limit int default 20,
   _card_id uuid default null,
   _service_id uuid default null
-) returns table(
-id uuid,
-owner_id uuid,
-type varchar(16),
-action varchar(16),
-amount int,
-created_at timestamp,
-sender jsonb,
-receiver jsonb
-) as $$begin
-return query
-  select * from(
-                 -- expense transfer
-                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
-                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
-                        jsonb_build_object('name', receiver_customer.name, 'image_url', receiver_customer.image_url, 'pan', mask_credit_card(t.receiver->>'pan')) as receiver
-                 from transactions t
-                        join customer_card own_card on own_card.id = (t.sender->>'id')::uuid
-                        join customer receiver_customer on receiver_customer.id = (t.receiver->>'customer_id')::uuid
-                 where t.owner_id = _customer_id and t.created_at between _from and _to
-                 union all
-                 -- expense payment
-                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
-                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
-                        jsonb_build_object('id', s.id, 'name', s.name, 'image_url', s.image_url) as receiver
-                 from transactions t
-                        join customer_card own_card on own_card.id = (t.sender->>'id')::uuid
-                        join service s on s.id = (t.receiver->>'id')::uuid
-                 where t.owner_id = _customer_id and t.created_at between _from and _to
-                 union all
-                 -- income transfer
-                 select t.id, t.owner_id, t.type, t.action, t.amount, t.created_at,
-                        jsonb_build_object('name', sender_customer.name, 'image_url', sender_customer.image_url, 'pan', mask_credit_card(t.sender->>'pan')) as sender,
-                        jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as receiver
-                 from transactions t
-                        join customer sender_customer on sender_customer.id = (t.sender->>'customer_id')::uuid
-                        join customer_card own_card on own_card.id = (t.receiver->>'id')::uuid
-                 where t.owner_id = _customer_id and t.created_at between _from and _to
- ) as transactions
-  where (_card_id is null or (transactions.sender->>'id')::uuid = _card_id or (transactions.receiver->>'id')::uuid = _card_id)
-  and (_service_id is null or (transactions.receiver->>'id')::uuid = _service_id );
+)
+  returns table (
+                  total_count int,
+                  id uuid,
+                  owner_id uuid,
+                  type varchar(16),
+                  action text,
+                  amount int,
+                  created_at timestamp,
+                  sender jsonb,
+                  receiver jsonb
+                ) as $$
+declare
+  total_count int := 0;
+begin
+  drop table if exists alltransactions;
+
+  create temp table alltransactions AS (
+    -- expense transfer
+    select t.id, t.owner_id, t.type, 'transfer' as action, t.amount, t.created_at,
+           jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
+           jsonb_build_object('name', receiver_customer.name, 'image_url', receiver_customer.image_url, 'pan', mask_credit_card(t.receiver_pan)) as receiver
+    from transfer t
+           join customer_card own_card on own_card.id = t.sender_id
+           join customer receiver_customer on receiver_customer.id = t.receiver_id
+    where t.owner_id = _customer_id and t.created_at between _from and _to
+    union all
+    -- expense payment
+    select p.id, p.owner_id, p.type, 'payment' as action, p.amount, p.created_at,
+           jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as sender,
+           jsonb_build_object('id', s.id, 'name', s.name, 'image_url', s.image_url) as receiver
+    from payment p
+           join customer_card own_card on own_card.id = p.sender_id
+           join service s on s.id = p.receiver_id
+    where p.owner_id = _customer_id and p.created_at between _from and _to
+    union all
+    -- income transfer
+    select t.id, t.owner_id, t.type, 'transfer' as action, t.amount, t.created_at,
+           jsonb_build_object('name', sender_customer.name, 'image_url', sender_customer.image_url, 'pan', mask_credit_card(t.sender_pan)) as sender,
+           jsonb_build_object('id', own_card.id, 'name', own_card.name, 'pan', mask_credit_card(own_card.pan)) as receiver
+    from transfer t
+           join customer sender_customer on sender_customer.id = t.sender_id
+           join customer_card own_card on own_card.id = t.receiver_id
+    where t.owner_id = _customer_id and t.created_at between _from and _to
+  );
+
+  select count(*) into total_count from alltransactions
+  where (_card_id is null or (alltransactions.sender->>'id')::uuid = _card_id or (alltransactions.receiver->>'id')::uuid = _card_id)
+    and (_service_id is null or (alltransactions.receiver->>'id')::uuid = _service_id);
+
+  return query
+    select total_count, alltransactions.*
+    from alltransactions
+    order by alltransactions.created_at desc, (alltransactions.type = 'income') desc
+    limit _limit offset (_page - 1) * _limit;
 end;
 $$ language plpgsql;
 insert into message(name, message, http_code) values
@@ -353,7 +483,10 @@ insert into message(name, message, http_code) values
 ('SERVICE_DELETED', '{"en": "Service deleted successfully", "uz": "Xizmat muvaffaqiyatli o''chirildi", "ru": "Услуга успешно удалена"}', 200),
 ('PAYMENT_SUCCESS', '{"en": "Payment successful", "uz": "To''lov muvaffaqiyatli amalga oshirildi", "ru": "Оплата прошла успешно"}', 200),
 ('TRANSFER_SUCCESS', '{"en": "Money transferred successfully", "uz": "Pul muvaffaqiyatli o''tkazildi", "ru": "Деньги успешно переведены"}', 200),
-('CODE_ALREADY_SENT', '{"en": "Verification code already sent", "uz": "Tasdiqlash kodi allaqachon yuborilgan", "ru": "Код подтверждения уже отправлен"}', 409)
+('CODE_ALREADY_SENT', '{"en": "Verification code already sent", "uz": "Tasdiqlash kodi allaqachon yuborilgan", "ru": "Код подтверждения уже отправлен"}', 409),
+('SAME_FIELD_NAME', '{"en": "Field name cannot be same", "uz": "Maydon nomi bir xil bo''lishi mumkin emas", "ru": "Название поля не может быть одинаковым"}', 409),
+('TOO_MANY_TRIES', '{"en": "Too many tries", "uz": "Juda ko''p urinishlar", "ru": "Слишком много попыток"}', 403),
+('TRY_AGAIN_AFTER', '{"en": "Try again after {0} seconds", "uz": "{0} sekunddan keyin urinib ko''ring", "ru": "Попробуйте снова через {0} секунд"}', 403)
 on conflict do nothing;
 
 insert into service_category(code, name) values

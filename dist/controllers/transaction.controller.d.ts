@@ -4,6 +4,7 @@ export declare class TransactionController {
     transaction: TransactionService;
     pay: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     transferToSelf: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    transferMoney: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     getCustomerTransactions: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     private getCustomerId;
 }

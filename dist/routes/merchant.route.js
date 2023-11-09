@@ -17,10 +17,10 @@ class MerchantRoute {
     }
     initializeRoutes() {
         this.router.get(`${this.path}/profile`, auth_middleware_1.AuthMiddleware, this.merchant.getMerchantProfile);
-        this.router.post(`${this.path}/login`, this.auth.loginMerchant);
-        this.router.post(`${this.path}/send-code`, this.auth.sendCode);
+        this.router.post(`${this.path}/login`, (0, validation_middleware_1.ValidationMiddleware)(merchant_dto_1.MerchantLoginDto), this.auth.loginMerchant);
+        this.router.post(`${this.path}/sendcode`, (0, validation_middleware_1.ValidationMiddleware)(merchant_dto_1.EmailSenderDto), this.auth.sendCode);
         this.router.post(`${this.path}/register`, (0, validation_middleware_1.ValidationMiddleware)(merchant_dto_1.CreateMerchantDto), this.auth.signUpMerchant);
-        this.router.put(`${this.path}/update`, auth_middleware_1.AuthMiddleware, this.merchant.updateMerchant);
+        this.router.put(`${this.path}/profile`, auth_middleware_1.AuthMiddleware, this.merchant.updateMerchant);
         this.router.put(`${this.path}/lang`, auth_middleware_1.AuthMiddleware, this.merchant.updateMerchantLang);
     }
 }

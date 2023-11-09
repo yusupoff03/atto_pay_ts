@@ -14,3 +14,20 @@ export class CreateMerchantDto {
   @MinLength(7)
   public password: string;
 }
+export class MerchantLoginDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail()
+  public email: string;
+  @IsString()
+  @IsNotEmpty()
+  @IsAlphanumeric()
+  @MinLength(7)
+  public password: string;
+}
+export class EmailSenderDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail()
+  public email: string;
+}

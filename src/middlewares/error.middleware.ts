@@ -13,7 +13,7 @@ export const ErrorMiddleware = async (error: HttpException | CustomError, req: R
       `SELECT message -> $2 AS message, http_code
        FROM message
        WHERE name = $1`,
-      [error.name.toUpperCase(), lang],
+      [error.name, lang],
     );
     const status: number = errorObject[0]?.http_code || 500;
     let message: string = errorObject[0]?.message || 'Something went wrong';
@@ -25,9 +25,15 @@ export const ErrorMiddleware = async (error: HttpException | CustomError, req: R
     switch (error.name) {
       case 'USER_BLOCKED': {
         if (errorObject) {
-          info = { ...info, message: errorObject[0].message };
+          info = { ...info, message: errorObject[0].message, timeLeft: error.info };
           message = errorObject[0].message.replace('{0}', error.info?.toString() || '60');
         }
+        break;
+      }
+      case 'VALIDATION_ERROR': {
+        info = { ...info, message: errorObject[0].message };
+        message = errorObject[0].message.replace(`{0}`, error.info?.toString());
+        break;
       }
     }
     logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}`);

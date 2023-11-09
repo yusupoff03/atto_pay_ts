@@ -6,6 +6,7 @@ import { verify } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
 import { DataStoredInToken } from '@interfaces/auth.interface';
 import { HttpException } from '@exceptions/httpException';
+import { CustomError } from "@exceptions/CustomError";
 
 export class MerchantController {
   public merchant = Container.get(MerchantService);
@@ -22,8 +23,8 @@ export class MerchantController {
   public updateMerchant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);
-      const { name, password } = req.body;
-      const updateMerchantData = await this.merchant.updateMerchant(merchantId, name, password);
+      const { name } = req.body;
+      const updateMerchantData = await this.merchant.updateMerchant(merchantId, name);
       res.status(200).json({
         data: updateMerchantData,
       });
@@ -47,6 +48,6 @@ export class MerchantController {
     if (decodedToken.role) {
       return String(decodedToken.id);
     }
-    throw new HttpException(403, 'You dont have access to this recourse');
+    throw new CustomError('MISSING_TOKEN');
   };
 }

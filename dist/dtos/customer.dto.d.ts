@@ -5,9 +5,10 @@ export declare class CreateCustomerDto {
 }
 export declare class UpdateCustomerDto {
     name?: string;
-    password?: string;
     image?: any;
     deleteImage?: boolean;
+    gender?: string;
+    birthDate?: string;
 }
 export declare class CustomerLoginDto {
     phone: string;

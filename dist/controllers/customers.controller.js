@@ -32,8 +32,8 @@ class CustomersController {
         this.addServiceToSaved = async (req, res, next) => {
             try {
                 const customerId = this.getCustomerId(req);
-                const { serviceId } = req.body;
-                await this.customer.addToSaved(customerId, serviceId);
+                const { serviceId: id } = req.body;
+                await this.customer.addToSaved(customerId, id);
                 res.status(200).json({
                     success: true,
                 });

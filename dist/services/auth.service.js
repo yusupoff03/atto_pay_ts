@@ -184,7 +184,7 @@ let AuthService = class AuthService {
             throw new CustomError_1.CustomError('EXPIRED_OTP');
         }
         if (codeObject.numAttempt == 3) {
-            throw new CustomError_1.CustomError('EXPIRED_OTP');
+            throw new CustomError_1.CustomError('TOO_MANY_TRIES');
         }
         if (codeObject.code === parseInt(code) && (0, moment_1.default)().isBefore(codeObject.expiresAt)) {
             const hashedPassword = await (0, bcrypt_1.hash)(password, 10);
@@ -208,19 +208,19 @@ let AuthService = class AuthService {
         const codeObject = JSON.parse(redisCode);
         const codeObject1 = {
             code: Math.floor(100000 + Math.random() * 900000),
-            expiresAt: (0, moment_1.default)().add(5, 'minutes').valueOf(),
+            expiresAt: (0, moment_1.default)().add(2, 'minutes').valueOf(),
             numAttempt: 0,
         };
         if (!redisCode || (0, moment_1.default)().isAfter(codeObject.expiresAt)) {
             await this.redis.hSet('verification_code', email, JSON.stringify(codeObject1));
             await mailSending_service_1.MailSendingService.mailSender(email, codeObject1.code);
-            return;
+            return (0, moment_1.default)(codeObject1.expiresAt).diff((0, moment_1.default)(), 'seconds');
         }
         if (redisCode && resend) {
             if ((0, moment_1.default)().isAfter(codeObject.expiresAt)) {
                 await this.redis.hSet('verification_code', email, JSON.stringify(codeObject1));
                 await mailSending_service_1.MailSendingService.mailSender(email, codeObject1.code);
-                return;
+                return (0, moment_1.default)(codeObject1.expiresAt).diff((0, moment_1.default)(), 'seconds');
             }
             const timeLeft = (0, moment_1.default)(codeObject.expiresAt).diff((0, moment_1.default)(), 'seconds');
             throw new CustomError_1.CustomError('CODE_ALREADY_SEND', null, { timeLeft });
@@ -249,7 +249,7 @@ let AuthService = class AuthService {
                 const unblockTime = (0, moment_1.default)(merchantStatus.last_login_attempt).add(1, 'minute');
                 if ((0, moment_1.default)().isBefore(unblockTime)) {
                     const timeLeft = unblockTime.diff((0, moment_1.default)(), 'seconds');
-                    throw new CustomError_1.CustomError('USER_BLOCKED', null, { timeLeft });
+                    throw new CustomError_1.CustomError('USER_BLOCKED', null, timeLeft);
                 }
                 merchantStatus.is_blocked = false;
                 merchantStatus.last_login_attempt = null;
@@ -271,7 +271,9 @@ let AuthService = class AuthService {
             const statusObject = `${email}_${deviceId}`;
             await this.redis.hSet('merchant_status', statusObject, JSON.stringify(merchantStatus));
             if (merchantStatus.is_blocked) {
-                throw new CustomError_1.CustomError('USER_BLOCKED', null, { timeLeft: 60 });
+                const unblockTime = (0, moment_1.default)(merchantStatus.last_login_attempt).add(1, 'minute');
+                const timeLeft = unblockTime.diff((0, moment_1.default)(), 'seconds');
+                throw new CustomError_1.CustomError('USER_BLOCKED', null, timeLeft);
             }
             else {
                 throw new CustomError_1.CustomError('WRONG_PASSWORD');

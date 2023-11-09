@@ -3,7 +3,7 @@ import pg from '@database';
 import { ServiceInterface, ServiceUpdate } from '@interfaces/service.interface';
 import { FileUploader } from '@utils/imageStorage';
 import { CustomError } from '@exceptions/CustomError';
-import base64url, { Base64Url } from 'base64url';
+import base64url from 'base64url';
 import * as crypto from 'crypto';
 
 @Service()
@@ -13,34 +13,45 @@ export class ServiceService {
     this.fileUploader = new FileUploader('eu-north-1', 'image-24');
   }
   public async createService(serviceData: ServiceInterface, lang: any, image?: any): Promise<ServiceInterface> {
-    const { name, price, merchant_id, categoryId, isActive } = serviceData;
+    const { name, merchant_id, categoryId, isActive } = serviceData;
     const { rows } = await pg.query(`Select * from service where merchant_id=$1 and category_id=$2 and deleted = false`, [merchant_id, categoryId]);
-    console.log(rows[0]);
     if (rows[0]) throw new CustomError('SERVICE_ALREADY_EXISTS');
     const newActive = isActive || false;
     const public_key = base64url(crypto.randomBytes(16));
-    console.log(public_key);
-    const { rows: service } = await pg.query(
-      `INSERT INTO service(name,price,merchant_id,category_id,is_active,public_key) values ($1,$2,$3,$4,$5,$6) RETURNING (select message from message where name = 'SERVICE_CREATED')`,
-      [name, price, merchant_id, categoryId, newActive, public_key],
-    );
+    const { rows: services } = await pg.query(`call create_service($1, $2, $3, $4, $5, $6, null, null, null)`, [
+      merchant_id,
+      categoryId,
+      name,
+      newActive,
+      public_key,
+      serviceData.fields,
+    ]);
+    const { error_code, error_message, success_message } = services[0];
+    if (error_code) throw new CustomError(error_code, error_message);
+    const { rows: created } = await pg.query(`Select * from service where merchant_id = $1 and category_id=$2 and deleted = false`, [
+      merchant_id,
+      categoryId,
+    ]);
+    console.log(created);
+    const service = created[0];
+    console.log(service);
     if (image) {
-      const uploadPath = await this.fileUploader.uploadFile(image, `${service[0].id}.${image.name.split('.').pop()}`);
-      if (uploadPath) await pg.query(`Update service set image_url = $1 where id = $2`, [uploadPath, service[0].id]);
+      const uploadPath = await this.fileUploader.uploadFile(image, `${service.id}.${image.name.split('.').pop()}`);
+      if (uploadPath) await pg.query(`Update service set image_url = $1 where id = $2`, [uploadPath, service.id]);
     }
-    if (service[0]) {
-      return service[0].message[lang];
+    if (services[0]) {
+      return success_message[lang];
     }
     throw new CustomError('DATABASE_ERROR');
   }
   public async getMerchantServices(merchantId: string, lang: any): Promise<ServiceInterface[]> {
     const { rows } = await pg.query(
       `
-select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url, s.is_active,
-  c.code as category_code, c.name -> $1 as category_name
-from service s
-JOIN service_category c on s.category_id = c.id
-where merchant_id = $2 and deleted = false`,
+        select s.id, s.merchant_id, s.category_id, s.name, s.image_url, s.is_active,
+               c.code as category_code, c.name -> $1 as category_name
+        from service s
+               JOIN service_category c on s.category_id = c.id
+        where merchant_id = $2 and deleted = false`,
       [lang, merchantId],
     );
     if (!rows[0]) {
@@ -55,11 +66,11 @@ where merchant_id = $2 and deleted = false`,
   public async getAllServices(lang: any, customerId): Promise<ServiceInterface[]> {
     const services: ServiceInterface[] = [];
     const { rows } = await pg.query(
-      `select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url,
-      c.code as category_code, c.name -> $1 as category_name
-    from service s
-    JOIN service_category c on s.category_id = c.id
-    where is_active = true and deleted = false`,
+      `select s.id, s.merchant_id, s.category_id, s.name, s.image_url,
+              c.code as category_code, c.name -> $1 as category_name
+       from service s
+              JOIN service_category c on s.category_id = c.id
+       where is_active = true and deleted = false`,
       [lang],
     );
     if (!rows[0]) return [];
@@ -67,11 +78,16 @@ where merchant_id = $2 and deleted = false`,
       service.image_url = FileUploader.getUrl(service.image_url);
       services.push(service);
     });
-    const { rows: saved } = await pg.query(`Select * from customer_saved_service where customer_id =$1`, [customerId]);
+    const { rows: saved } = await pg.query(
+      `select service_id as id
+                                            from customer_saved_service
+                                            where customer_id = $1`,
+      [customerId],
+    );
     if (saved[0]) {
       services.forEach(service => {
         saved.forEach(save => {
-          if (service.id === save.service_id && save.customer_id === customerId) {
+          if (service.id === save.id) {
             service.saved = true;
           }
         });
@@ -82,10 +98,14 @@ where merchant_id = $2 and deleted = false`,
   public async getOneById(merchantId, serviceId, lang): Promise<any> {
     const { rows } = await pg.query(
       `
-select s.*, c.code as category_code, c.name -> $3 as category_name
-from service s
-JOIN service_category c on s.category_id = c.id
-where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
+        select s.id, s.merchant_id, s.category_id, s.name, s.image_url, s.is_active, s.public_key,
+               c.code as category_code, c.name -> $3 as category_name,
+               (select json_agg(
+                         json_build_object('id', f.id, 'name', f.name, 'type', f.type, 'order', f.order_num)
+                         ) from service_field f where f.service_id = s.id) as fields
+        from service s
+               JOIN service_category c on s.category_id = c.id
+        where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
       [serviceId, merchantId, lang],
     );
     if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');
@@ -112,7 +132,6 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
 
     const name = service.name || rows[0].name;
     const categoryId = service.categoryId || rows[0].category_id;
-    const price = service.price || rows[0].price;
     const isActive = service.isActive || rows[0].is_active;
     if (image || service.deleteImage) {
       await this.fileUploader.deleteFile(`${rows[0].image_url}`);
@@ -124,8 +143,8 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
       }
     }
     const { rows: message } = await pg.query(
-      `Update service set name = $1, price = $2, category_id = $3,is_active = $4 where id = $5 returning (select message from message where name = 'SERVICE_UPDATED')`,
-      [name, price, categoryId, isActive, service.id],
+      `Update service set name = $1, category_id = $2,is_active = $3 where id = $4 returning (select message from message where name = 'SERVICE_UPDATED')`,
+      [name, categoryId, isActive, service.id],
     );
     return message[0].message[lang];
   }
@@ -138,11 +157,14 @@ where s.id = $1 and s.merchant_id = $2 and s.deleted = false`,
   }
   public async getOnePublicById(id, lang): Promise<any> {
     const { rows } = await pg.query(
-      `select s.id, s.merchant_id, s.category_id, s.name, s.price, s.image_url,
-  c.code as category_code, c.name -> $2 as category_name
-from service s
-JOIN service_category c on s.category_id = c.id
-where s.id = $1 and s.deleted = false and s.is_active = true`,
+      `select s.id, s.merchant_id, s.category_id, s.name, s.image_url,
+              c.code as category_code, c.name -> $2 as category_name,
+              (select json_agg(
+                        json_build_object('id', f.id, 'name', f.name, 'type', f.type, 'order', f.order_num)
+                        ) from service_field f where f.service_id = s.id) as fields
+       from service s
+              JOIN service_category c on s.category_id = c.id
+       where s.id = $1 and s.deleted = false and s.is_active = true`,
       [id, lang],
     );
     if (!rows[0]) throw new CustomError('SERVICE_NOT_FOUND');

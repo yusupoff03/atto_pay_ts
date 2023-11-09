@@ -6,6 +6,11 @@ const class_validator_1 = require("class-validator");
 class CreateCustomerDto {
 }
 tslib_1.__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    tslib_1.__metadata("design:type", String)
+], CreateCustomerDto.prototype, "name", void 0);
+tslib_1.__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(6),
@@ -19,13 +24,13 @@ tslib_1.__decorate([
     (0, class_validator_1.IsString)(),
     tslib_1.__metadata("design:type", String)
 ], UpdateCustomerDto.prototype, "name", void 0);
+exports.UpdateCustomerDto = UpdateCustomerDto;
+class CustomerLoginDto {
+}
 tslib_1.__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     tslib_1.__metadata("design:type", String)
-], UpdateCustomerDto.prototype, "password", void 0);
-exports.UpdateCustomerDto = UpdateCustomerDto;
-class CustomerLoginDto {
-}
+], CustomerLoginDto.prototype, "phone", void 0);
 exports.CustomerLoginDto = CustomerLoginDto;
 //# sourceMappingURL=customer.dto.js.map

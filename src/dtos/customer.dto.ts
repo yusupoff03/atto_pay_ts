@@ -1,6 +1,8 @@
 import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
 
 export class CreateCustomerDto {
+  @IsNotEmpty()
+  @IsString()
   public name: string;
   public phone: string;
 
@@ -14,13 +16,14 @@ export class CreateCustomerDto {
 export class UpdateCustomerDto {
   @IsString()
   public name?: string;
-  @IsString()
-  @IsNotEmpty()
-  public password?: string;
   public image?: any;
   public deleteImage?: boolean;
+  public gender?: string;
+  public birthDate?: string;
 }
 export class CustomerLoginDto {
+  @IsString()
+  @IsNotEmpty()
   public phone: string;
   public password?: string;
   public otp?: string;

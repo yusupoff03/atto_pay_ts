@@ -61,8 +61,8 @@ export class AuthController {
     try {
       const merchantData: Merchant = req.body;
       const newEmail = merchantData.email.toLowerCase();
-      const { code } = req.body;
-      const { tokenData, merchant } = await this.auth.signUpMerchant(merchantData, newEmail, code);
+      const { otp } = req.body;
+      const { tokenData, merchant } = await this.auth.signUpMerchant(merchantData, newEmail, otp);
       res.status(201).json({ token: tokenData.token, data: merchant });
     } catch (error) {
       next(error);
@@ -72,8 +72,9 @@ export class AuthController {
     try {
       const { email, resend } = req.body;
       const newEmail = email.toLowerCase();
-      await this.auth.sendCode(newEmail, resend);
-      res.status(200).json({ success: true });
+      const timeLeft = await this.auth.sendCode(newEmail, resend);
+      console.log(timeLeft);
+      res.status(200).json({ success: true, timeLeft: timeLeft });
     } catch (error) {
       next(error);
     }

@@ -6,6 +6,7 @@ import { Customer, UpdateCustomerData } from '@interfaces/customers.interface';
 import { FileUploader } from '@utils/imageStorage';
 import { RedisClient } from '@/database/redis';
 import { CustomError } from '@exceptions/CustomError';
+import moment from 'moment';
 
 @Service()
 export class CustomerService {
@@ -46,24 +47,22 @@ export class CustomerService {
     );
     if (!findCustomer[0]) throw new CustomError('USER_NOT_FOUND');
     const name = customerData.name;
-    const password = customerData.password;
     const deleteImage = customerData.deleteImage;
-    const hashedPassword = password ? await hash(password, 10) : findCustomer[0].password;
     const newName = name || findCustomer[0].name;
-    const newPassword = hashedPassword || findCustomer[0].hashed_password;
     const gender = customerData.gender || findCustomer[0].gender;
-    const birthDate = customerData.birthDate || findCustomer[0].birthDate;
+    const newBirthDate = customerData.birthDate
+      ? moment(customerData.birthDate, 'DD/MM/YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]').toString()
+      : customerData.birthDate;
     const { rows: updateCustomerData } = await pg.query(
       `
         UPDATE
           customer
-        SET "name"    = $2,
-            "hashed_password" = $3,
-            "gender"= $4,
-            "birth_date"=$5
+        SET "name" = $2,
+            "gender"= $3,
+            "birth_date"=$4
         WHERE "id" = $1 RETURNING *
       `,
-      [customerId, newName, newPassword, gender, birthDate],
+      [customerId, newName, gender, newBirthDate],
     );
     const fileUploader = new FileUploader('eu-north-1', 'image-24');
     if (deleteImage) {
@@ -120,7 +119,7 @@ export class CustomerService {
     });
     throw new HttpException(404, 'Not found');
   }
-  public async addToSaved(customerId: string, serviceId: any): Promise<void> {
+  public async addToSaved(customerId: string, serviceId: string): Promise<void> {
     await pg.query(
       `
 insert into customer_saved_service(customer_id, service_id)

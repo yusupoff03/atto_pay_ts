@@ -2,13 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerService = void 0;
 const tslib_1 = require("tslib");
-const bcrypt_1 = require("bcrypt");
 const typedi_1 = require("typedi");
 const _database_1 = tslib_1.__importDefault(require("../database"));
 const httpException_1 = require("../exceptions/httpException");
 const imageStorage_1 = require("../utils/imageStorage");
 const redis_1 = require("../database/redis");
 const CustomError_1 = require("../exceptions/CustomError");
+const moment_1 = tslib_1.__importDefault(require("moment"));
 let CustomerService = class CustomerService {
     constructor() {
         this.redis = new redis_1.RedisClient();
@@ -41,22 +41,20 @@ let CustomerService = class CustomerService {
         if (!findCustomer[0])
             throw new CustomError_1.CustomError('USER_NOT_FOUND');
         const name = customerData.name;
-        const password = customerData.password;
         const deleteImage = customerData.deleteImage;
-        const hashedPassword = password ? await (0, bcrypt_1.hash)(password, 10) : findCustomer[0].password;
         const newName = name || findCustomer[0].name;
-        const newPassword = hashedPassword || findCustomer[0].hashed_password;
         const gender = customerData.gender || findCustomer[0].gender;
-        const birthDate = customerData.birthDate || findCustomer[0].birthDate;
+        const newBirthDate = customerData.birthDate
+            ? (0, moment_1.default)(customerData.birthDate, 'DD/MM/YYYY').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]').toString()
+            : customerData.birthDate;
         const { rows: updateCustomerData } = await _database_1.default.query(`
         UPDATE
           customer
-        SET "name"    = $2,
-            "hashed_password" = $3,
-            "gender"= $4,
-            "birth_date"=$5
+        SET "name" = $2,
+            "gender"= $3,
+            "birth_date"=$4
         WHERE "id" = $1 RETURNING *
-      `, [customerId, newName, newPassword, gender, birthDate]);
+      `, [customerId, newName, gender, newBirthDate]);
         const fileUploader = new imageStorage_1.FileUploader('eu-north-1', 'image-24');
         if (deleteImage) {
             await _database_1.default.query(`Update customer set image_url = $1 where id = $2`, [null, customerId]);

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ValidationMiddleware = void 0;
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
-const httpException_1 = require("../exceptions/httpException");
+const CustomError_1 = require("../exceptions/CustomError");
 /**
  * @name ValidationMiddleware
  * @description Allows use of decorator and non-decorator based validation
@@ -22,7 +22,7 @@ const ValidationMiddleware = (type, skipMissingProperties = false, whitelist = f
         })
             .catch((errors) => {
             const message = errors.map((error) => Object.values(error.constraints)).join(', ');
-            next(new httpException_1.HttpException(400, message));
+            next(new CustomError_1.CustomError('VALIDATION_ERROR', null, message));
         });
     };
 };
