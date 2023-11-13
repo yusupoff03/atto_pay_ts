@@ -274,50 +274,53 @@ create or replace procedure transfer_money_to_self(
   _amount int,
   out transfer_id uuid,
   out error_code varchar(64),
-  out error_message text
+  out error_message text,
+  out success_message jsonb
 ) as $$
 declare
-  sender_card customer_card;
+sender_card customer_card;
   receiver_card customer_card;
 begin
-  begin
-    select * into sender_card from customer_card where id = _from_card_id and customer_id = _customer_id;
-    if not found then
+begin
+select * into sender_card from customer_card where id = _from_card_id and customer_id = _customer_id;
+if not found then
       error_code := 'CARD_NOT_FOUND';
       return;
-    end if;
+end if;
 
-    select * into receiver_card from customer_card where id = _to_card_id and customer_id = _customer_id;
-    if not found then
+select * into receiver_card from customer_card where id = _to_card_id and customer_id = _customer_id;
+if not found then
       error_code := 'CARD_NOT_FOUND';
       return;
-    end if;
+end if;
 
     if sender_card.balance < _amount then
       error_code := 'INSUFFICIENT_FUNDS';
       return;
-    end if;
-    insert into transactions (owner_id, type, action, amount, sender, receiver)
-    values (_customer_id, 'expense', 'transfer', _amount, jsonb_build_object('id', _from_card_id), jsonb_build_object('pan', receiver_card.pan, 'customer_id', receiver_card.customer_id))
-    returning id into transfer_id;
+end if;
 
-    insert into transactions (owner_id, type, action, amount, sender, receiver)
-    values (_customer_id, 'income', 'transfer', _amount, jsonb_build_object('pan', sender_card.pan, 'customer_id', sender_card.customer_id), jsonb_build_object('id', _to_card_id));
+insert into transfer (owner_id, type, amount, sender_id, receiver_pan, receiver_id)
+values (_customer_id, 'expense', _amount, _from_card_id, receiver_card.pan, receiver_card.customer_id)
+  returning id into transfer_id;
 
-    update customer_card set balance = balance - _amount where id = sender_card.id;
-    update customer_card set balance = balance + _amount where id = receiver_card.id;
-  exception
+insert into transfer (owner_id, type, amount, sender_pan, sender_id, receiver_id)
+values (_customer_id, 'income', _amount, sender_card.pan, sender_card.customer_id, _to_card_id);
+
+update customer_card set balance = balance - _amount where id = sender_card.id;
+update customer_card set balance = balance + _amount where id = receiver_card.id;
+
+select message from message where name = 'TRANSFER_SUCCESS' into success_message;
+exception
     when others then
       rollback;
       error_code := 'TRANSACTION_ERROR';
       error_message := sqlerrm;
       return;
-  end;
+end;
 
-  commit;
+commit;
 end;
 $$ language plpgsql;
-
 create or replace procedure transfer_money(
   _customer_id uuid,
   _from_card_id uuid,
@@ -486,7 +489,8 @@ insert into message(name, message, http_code) values
 ('CODE_ALREADY_SENT', '{"en": "Verification code already sent", "uz": "Tasdiqlash kodi allaqachon yuborilgan", "ru": "Код подтверждения уже отправлен"}', 409),
 ('SAME_FIELD_NAME', '{"en": "Field name cannot be same", "uz": "Maydon nomi bir xil bo''lishi mumkin emas", "ru": "Название поля не может быть одинаковым"}', 409),
 ('TOO_MANY_TRIES', '{"en": "Too many tries", "uz": "Juda ko''p urinishlar", "ru": "Слишком много попыток"}', 403),
-('TRY_AGAIN_AFTER', '{"en": "Try again after {0} seconds", "uz": "{0} sekunddan keyin urinib ko''ring", "ru": "Попробуйте снова через {0} секунд"}', 403)
+('TRY_AGAIN_AFTER', '{"en": "Try again after {0} seconds", "uz": "{0} sekunddan keyin urinib ko''ring", "ru": "Попробуйте снова через {0} секунд"}', 403),
+('INVALID_CARD_NUMBER','{"en": "Incorrect card number", "uz": "Karta raqami xato kiritildi", "ru": "Неверный номер карты"}', 400)
 on conflict do nothing;
 
 insert into service_category(code, name) values

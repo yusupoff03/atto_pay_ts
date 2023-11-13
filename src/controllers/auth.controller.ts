@@ -4,7 +4,6 @@ import { RequestWithCustomer } from '@interfaces/auth.interface';
 import { Customer, CustomerLogin } from '@interfaces/customers.interface';
 import { AuthService } from '@services/auth.service';
 import { Merchant } from '@interfaces/merchant.interface';
-import { HttpException } from '@exceptions/httpException';
 
 export class AuthController {
   public auth = Container.get(AuthService);
@@ -35,9 +34,6 @@ export class AuthController {
     try {
       const { phone } = req.body;
       const deviceId = req.headers['x-device-id'] as string;
-      if (!phone) {
-        throw new HttpException(400, 'Phone required');
-      }
       const { password, otp } = await this.auth.getLoginType(phone, deviceId);
       res.status(200).json({
         password: password,

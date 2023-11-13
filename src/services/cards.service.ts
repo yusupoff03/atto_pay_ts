@@ -2,6 +2,11 @@ import { Service } from 'typedi';
 import pg from '@database';
 import { CreateCardDto, CardUpdateDto } from '@dtos/card.dto';
 import { CustomError } from '@exceptions/CustomError';
+const request = require('')
+import axios from 'axios';
+import * as https from 'https';
+import fetch from 'node-fetch';
+import { Agent } from 'https';
 
 @Service()
 export class CardsService {
@@ -67,6 +72,50 @@ where pan = $1`,
     if (!rows[0]) throw new CustomError('CARD_NOT_FOUND');
 
     return rows[0];
+  }
+  public async addTransportCard(card: CreateCardDto, customerId: string, lang) {
+    const name = card.name;
+    const pan = card.pan;
+    const owner_name = card.owner_name;
+    const expiry_month: string = card.expiry_month;
+    const expiry_year: string = card.expiry_year;
+    // const options = {
+    //   method: 'GET',
+    //   url: `https://atto.crm24.uz/v1.0/terminal/top-up/check?cardNumber=${pan}`,
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     access_token: 'czxnajt3rjk38eedq0zlrais12fa92',
+    //   },
+    //   data: {
+    //     login: 'faresaler',
+    //     password: '1234567$fF',
+    //   },
+    //   httpsAgent: new Agent({
+    //     rejectUnauthorized: false,
+    //   }),
+    // };
+    const { rows } = await pg.query(
+      `Select *
+from customer_card
+where pan = $1`,
+      [pan],
+    );
+    if (rows[0]) {
+      throw new CustomError('CARD_ALREADY_ADDED');
+    }
+
+    // try {
+    //   const response = await axios(options);
+    //   if (response.status != 200) throw new CustomError('INVALID_CARD_NUMBER');
+    // } catch (error) {
+    //   console.error(error.message);
+    // }
+    const { rows: cardRows } = await pg.query(
+      `INSERT INTO customer_card( customer_id,name, owner_name,pan, expiry_month, expiry_year)
+       values ($1, $2, $3, $4, $5,$6) returning (select message from message where name = 'CARD_ADDED')`,
+      [customerId, name, owner_name, pan, expiry_month, expiry_year],
+    );
+    return cardRows[0].message[lang];
   }
 
   public async getOwnerByPan(pan: any) {

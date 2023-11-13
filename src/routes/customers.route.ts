@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { CustomersController } from '@controllers/customers.controller';
-import { CreateCustomerDto, CustomerLoginDto, UpdateCustomerDto } from "@dtos/customer.dto";
+import { CreateCustomerDto, CustomerLoginDto, LoginTypeDto, UpdateCustomerDto } from "@dtos/customer.dto";
 import { Routes } from '@interfaces/routes.interface';
 import { ValidationMiddleware } from '@middlewares/validation.middleware';
 import { AuthController } from '@controllers/auth.controller';
@@ -22,7 +22,7 @@ export class CustomersRoute implements Routes {
     this.router.post(`${this.path}/services`, AuthMiddleware, this.customer.addServiceToSaved);
     this.router.delete(`${this.path}/services`, AuthMiddleware, this.customer.deleteServiceFromSaved);
     this.router.post(`${this.path}/login`, ValidationMiddleware(CustomerLoginDto), this.auth.logIn);
-    this.router.post(`${this.path}/getlogin`, ValidationMiddleware(CustomerLoginDto), this.auth.getCustomerLoginType);
+    this.router.post(`${this.path}/getlogin`, ValidationMiddleware(LoginTypeDto), this.auth.getCustomerLoginType);
     this.router.put(`${this.path}/profile`, AuthMiddleware, ValidationMiddleware(UpdateCustomerDto), this.customer.updateCustomer);
     this.router.put(`${this.path}/lang`, AuthMiddleware, this.customer.updateCustomerLang);
     this.router.delete(`${this.path}/delete`, AuthMiddleware, this.customer.deleteCustomer);

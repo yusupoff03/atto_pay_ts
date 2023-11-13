@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, MATCHES, Matches } from 'class-validator';
+import { newStringRegex } from 'tsc-alias/dist/utils';
 
 export class CreateCustomerDto {
   @IsNotEmpty()
@@ -27,4 +28,14 @@ export class CustomerLoginDto {
   public phone: string;
   public password?: string;
   public otp?: string;
+}
+export class LoginTypeDto {
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(12)
+  @MaxLength(12)
+  @Matches(/^998\d{9}$/, {
+    message: ` `,
+  })
+  public phone: string;
 }

@@ -74,6 +74,20 @@ export class CardsController {
       next(error);
     }
   };
+  public addTransportCard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const customerId = this.getCustomerId(req);
+      const card: CreateCardDto = req.body;
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = this.card.addTransportCard(card, customerId, lang);
+      res.status(201).json({
+        success: true,
+        message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
   private getCustomerId = (req: Request): string => {
     const cookie = req.headers.authorization;
     const decodedToken = verify(cookie, SECRET_KEY) as DataStoredInToken;

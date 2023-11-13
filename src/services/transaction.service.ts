@@ -77,12 +77,12 @@ export class TransactionService {
   }
 
   public async transferMoneyToSelf(customerId, fromCardId, toCardId, amount): Promise<any> {
-    const { rows } = await pg.query(`call transfer_money_to_self($1,$2,$3,$4,null,null,null)`, [customerId, fromCardId, toCardId, amount]);
-    const { error_code, error_message, transfer_id } = rows[0];
+    const { rows } = await pg.query(`call transfer_money_to_self($1,$2,$3,$4,null,null,null,null)`, [customerId, fromCardId, toCardId, amount]);
+    const { error_code, error_message, transfer_id, success_message } = rows[0];
     if (error_code) {
       throw new CustomError(error_code, error_message);
     }
-    return transfer_id;
+    return { success_message, transfer_id };
   }
 
   public async getTransactions(

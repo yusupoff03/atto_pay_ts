@@ -29,10 +29,13 @@ export class TransactionController {
     try {
       const customerId = await this.getCustomerId(req);
       const { fromCardId, toCardId, amount } = req.body;
-      const transferId = await this.transaction.transferMoneyToSelf(customerId, fromCardId, toCardId, amount);
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const { success_message, transferId } = await this.transaction.transferMoneyToSelf(customerId, fromCardId, toCardId, amount);
+      const message = success_message[lang];
       res.status(200).json({
         success: true,
         transferId,
+        message,
       });
     } catch (error) {
       next(error);

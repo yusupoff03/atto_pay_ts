@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, MaxLength, Matches } from 'class-validator';
 
 export class CreateCardDto {
   @IsString()
@@ -20,4 +20,10 @@ export class CardUpdateDto {
   id: string;
   @IsString()
   name: string;
+}
+export class CardOwner {
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/\b(?:\d[ -]*?){16}\b/)
+  public pan: string;
 }
