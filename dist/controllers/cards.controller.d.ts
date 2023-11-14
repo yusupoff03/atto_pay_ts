@@ -8,5 +8,6 @@ export declare class CardsController {
     deleteCard: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     getOneById: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     getOwnerByPan: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+    addTransportCard: (req: Request, res: Response, next: NextFunction) => Promise<void>;
     private getCustomerId;
 }

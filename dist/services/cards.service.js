@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
 const _database_1 = tslib_1.__importDefault(require("../database"));
 const CustomError_1 = require("../exceptions/CustomError");
+const test_1 = require("../test");
 let CardsService = class CardsService {
     async createCard(cardDto, customerId, lang) {
         const name = cardDto.name;
@@ -57,6 +58,23 @@ where pan = $1`, [pan]);
         if (!rows[0])
             throw new CustomError_1.CustomError('CARD_NOT_FOUND');
         return rows[0];
+    }
+    async addTransportCard(card, customerId, lang) {
+        const name = card.name;
+        const pan = card.pan;
+        const owner_name = card.owner_name;
+        const expiry_month = card.expiry_month;
+        const expiry_year = card.expiry_year;
+        const { rows } = await _database_1.default.query(`Select *
+from customer_card
+where pan = $1`, [pan]);
+        if (rows[0]) {
+            throw new CustomError_1.CustomError('CARD_ALREADY_ADDED');
+        }
+        const response = await (0, test_1.request)(pan);
+        const { rows: cardRows } = await _database_1.default.query(`INSERT INTO customer_card( customer_id,name, owner_name,pan, expiry_month, expiry_year,balance)
+       values ($1, $2, $3, $4, $5,$6,$7) returning (select message from message where name = 'CARD_ADDED')`, [customerId, name, owner_name, pan, expiry_month, expiry_year, response.data.data.balance]);
+        return cardRows[0].message[lang];
     }
     async getOwnerByPan(pan) {
         const { rows } = await _database_1.default.query(`Select name from customer where id=(Select customer_id from customer_card  where  pan = $1)`, [pan]);

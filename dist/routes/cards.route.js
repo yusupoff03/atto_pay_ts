@@ -15,7 +15,8 @@ class CardsRoute {
     }
     initializeRoutes() {
         this.router.post(`${this.path}`, (0, validation_middleware_1.ValidationMiddleware)(card_dto_1.CreateCardDto), this.cards.createCard);
-        this.router.post(`${this.path}/owner`, auth_middleware_1.AuthMiddleware, this.cards.getOwnerByPan);
+        this.router.post(`${this.path}/owner`, auth_middleware_1.AuthMiddleware, (0, validation_middleware_1.ValidationMiddleware)(card_dto_1.CardOwner), this.cards.getOwnerByPan);
+        this.router.post(`${this.path}/transport/add`, auth_middleware_1.AuthMiddleware, (0, validation_middleware_1.ValidationMiddleware)(card_dto_1.CreateCardDto), this.cards.addTransportCard);
         this.router.get(`${this.path}`, this.cards.getCustomerCards);
         this.router.get(`${this.path}/:id`, this.cards.getOneById);
         this.router.delete(`${this.path}`, this.cards.deleteCard);

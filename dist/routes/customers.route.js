@@ -21,7 +21,7 @@ class CustomersRoute {
         this.router.post(`${this.path}/services`, auth_middleware_1.AuthMiddleware, this.customer.addServiceToSaved);
         this.router.delete(`${this.path}/services`, auth_middleware_1.AuthMiddleware, this.customer.deleteServiceFromSaved);
         this.router.post(`${this.path}/login`, (0, validation_middleware_1.ValidationMiddleware)(customer_dto_1.CustomerLoginDto), this.auth.logIn);
-        this.router.post(`${this.path}/getlogin`, (0, validation_middleware_1.ValidationMiddleware)(customer_dto_1.CustomerLoginDto), this.auth.getCustomerLoginType);
+        this.router.post(`${this.path}/getlogin`, (0, validation_middleware_1.ValidationMiddleware)(customer_dto_1.LoginTypeDto), this.auth.getCustomerLoginType);
         this.router.put(`${this.path}/profile`, auth_middleware_1.AuthMiddleware, (0, validation_middleware_1.ValidationMiddleware)(customer_dto_1.UpdateCustomerDto), this.customer.updateCustomer);
         this.router.put(`${this.path}/lang`, auth_middleware_1.AuthMiddleware, this.customer.updateCustomerLang);
         this.router.delete(`${this.path}/delete`, auth_middleware_1.AuthMiddleware, this.customer.deleteCustomer);

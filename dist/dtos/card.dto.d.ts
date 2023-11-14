@@ -9,3 +9,6 @@ export declare class CardUpdateDto {
     id: string;
     name: string;
 }
+export declare class CardOwner {
+    pan: string;
+}

@@ -63,12 +63,12 @@ let TransactionService = class TransactionService {
         }
     }
     async transferMoneyToSelf(customerId, fromCardId, toCardId, amount) {
-        const { rows } = await database_1.default.query(`call transfer_money_to_self($1,$2,$3,$4,null,null,null)`, [customerId, fromCardId, toCardId, amount]);
-        const { error_code, error_message, transfer_id } = rows[0];
+        const { rows } = await database_1.default.query(`call transfer_money_to_self($1,$2,$3,$4,null,null,null,null)`, [customerId, fromCardId, toCardId, amount]);
+        const { error_code, error_message, transfer_id, success_message } = rows[0];
         if (error_code) {
             throw new CustomError_1.CustomError(error_code, error_message);
         }
-        return transfer_id;
+        return { success_message, transfer_id };
     }
     async getTransactions(customerId, offset, fromDate, toDate, byCardId, byServiceId, page, limit) {
         let transactions;

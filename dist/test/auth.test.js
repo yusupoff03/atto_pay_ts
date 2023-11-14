@@ -42,4 +42,4 @@ describe('Testing Auth', () => {
         });
     });
 });
-//# sourceMappingURL=auth.test.ts.map
+//# sourceMappingURL=auth.test.js.map

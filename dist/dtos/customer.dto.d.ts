@@ -15,3 +15,6 @@ export declare class CustomerLoginDto {
     password?: string;
     otp?: string;
 }
+export declare class LoginTypeDto {
+    phone: string;
+}

@@ -1,30 +1,24 @@
-const axios = require('axios');
-const { Agent } = require('https');
+import axios from "axios";
+import { CustomError } from "@exceptions/CustomError";
 
-const request = async function request(cardNumber) {
+export async function request(cardNumber) {
+  const url = `https://atto.crm24.uz/v1.0/terminal/top-up/check?cardNumber=${cardNumber}`;
+
   const options = {
     method: 'GET',
-    url: `https://atto.crm24.uz/v1.0/terminal/top-up/check?cardNumber=${cardNumber}`,
+    url: url,
     headers: {
       'Content-Type': 'application/json',
-      access_token: 'czxnajt3rjk38eedq0zlrais12fa92',
+      access_token: 'dn3aucbnmk8xa7d7yuahtkv8ze794u',
     },
     data: {
       login: 'faresaler',
       password: '1234567$fF',
     },
-    httpsAgent: new Agent({
-      rejectUnauthorized: false,
-    }),
   };
-
   try {
-    const response = await axios(options);
-    console.log(response);
+    return await axios(options);
   } catch (error) {
-    console.error(error.message);
+    throw new CustomError('CARD_NOT_FOUND');
   }
-};
-module.exports = {
-  request,
-};
+}

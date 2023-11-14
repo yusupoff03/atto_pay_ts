@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const typedi_1 = require("typedi");
 const auth_service_1 = require("../services/auth.service");
-const httpException_1 = require("../exceptions/httpException");
 class AuthController {
     constructor() {
         this.auth = typedi_1.Container.get(auth_service_1.AuthService);
@@ -34,9 +33,6 @@ class AuthController {
             try {
                 const { phone } = req.body;
                 const deviceId = req.headers['x-device-id'];
-                if (!phone) {
-                    throw new httpException_1.HttpException(400, 'Phone required');
-                }
                 const { password, otp } = await this.auth.getLoginType(phone, deviceId);
                 res.status(200).json({
                     password: password,
