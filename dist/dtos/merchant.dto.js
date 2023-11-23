@@ -1,52 +1,101 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EmailSenderDto = exports.MerchantLoginDto = exports.CreateMerchantDto = void 0;
-const tslib_1 = require("tslib");
-const class_validator_1 = require("class-validator");
-class CreateMerchantDto {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
 }
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    tslib_1.__metadata("design:type", String)
+_export(exports, {
+    CreateMerchantDto: function() {
+        return CreateMerchantDto;
+    },
+    MerchantLoginDto: function() {
+        return MerchantLoginDto;
+    },
+    EmailSenderDto: function() {
+        return EmailSenderDto;
+    }
+});
+const _classvalidator = require("class-validator");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+function _ts_decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for(var i = decorators.length - 1; i >= 0; i--)if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function _ts_metadata(k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+}
+let CreateMerchantDto = class CreateMerchantDto {
+    constructor(){
+        _define_property(this, "name", void 0);
+        _define_property(this, "email", void 0);
+        _define_property(this, "password", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
 ], CreateMerchantDto.prototype, "name", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEmail)(),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsEmail)(),
+    _ts_metadata("design:type", String)
 ], CreateMerchantDto.prototype, "email", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsAlphanumeric)(),
-    (0, class_validator_1.MinLength)(7),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsAlphanumeric)(),
+    (0, _classvalidator.MinLength)(7),
+    _ts_metadata("design:type", String)
 ], CreateMerchantDto.prototype, "password", void 0);
-exports.CreateMerchantDto = CreateMerchantDto;
-class MerchantLoginDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEmail)(),
-    tslib_1.__metadata("design:type", String)
+let MerchantLoginDto = class MerchantLoginDto {
+    constructor(){
+        _define_property(this, "email", void 0);
+        _define_property(this, "password", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsEmail)(),
+    _ts_metadata("design:type", String)
 ], MerchantLoginDto.prototype, "email", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsAlphanumeric)(),
-    (0, class_validator_1.MinLength)(7),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsAlphanumeric)(),
+    (0, _classvalidator.MinLength)(7),
+    _ts_metadata("design:type", String)
 ], MerchantLoginDto.prototype, "password", void 0);
-exports.MerchantLoginDto = MerchantLoginDto;
-class EmailSenderDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEmail)(),
-    tslib_1.__metadata("design:type", String)
+let EmailSenderDto = class EmailSenderDto {
+    constructor(){
+        _define_property(this, "email", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsEmail)(),
+    _ts_metadata("design:type", String)
 ], EmailSenderDto.prototype, "email", void 0);
-exports.EmailSenderDto = EmailSenderDto;
+
 //# sourceMappingURL=merchant.dto.js.map

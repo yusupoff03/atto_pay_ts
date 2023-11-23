@@ -1,46 +1,97 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CardOwner = exports.CardUpdateDto = exports.CreateCardDto = void 0;
-const tslib_1 = require("tslib");
-const class_validator_1 = require("class-validator");
-class CreateCardDto {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
 }
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+_export(exports, {
+    CreateCardDto: function() {
+        return CreateCardDto;
+    },
+    CardUpdateDto: function() {
+        return CardUpdateDto;
+    },
+    CardOwner: function() {
+        return CardOwner;
+    }
+});
+const _classvalidator = require("class-validator");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+function _ts_decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for(var i = decorators.length - 1; i >= 0; i--)if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function _ts_metadata(k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+}
+let CreateCardDto = class CreateCardDto {
+    constructor(){
+        _define_property(this, "name", void 0);
+        _define_property(this, "pan", void 0);
+        _define_property(this, "expiry_month", void 0);
+        _define_property(this, "expiry_year", void 0);
+        _define_property(this, "owner_name", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "name", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(16),
-    (0, class_validator_1.MaxLength)(16),
-    (0, class_validator_1.IsNotEmpty)(),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.MinLength)(16),
+    (0, _classvalidator.MaxLength)(16),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "pan", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "expiry_month", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "expiry_year", void 0);
-exports.CreateCardDto = CreateCardDto;
-class CardUpdateDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+let CardUpdateDto = class CardUpdateDto {
+    constructor(){
+        _define_property(this, "id", void 0);
+        _define_property(this, "name", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], CardUpdateDto.prototype, "name", void 0);
-exports.CardUpdateDto = CardUpdateDto;
-class CardOwner {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Matches)(/\b(?:\d[ -]*?){16}\b/),
-    tslib_1.__metadata("design:type", String)
+let CardOwner = class CardOwner {
+    constructor(){
+        _define_property(this, "pan", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.Matches)(/\b(?:\d[ -]*?){16}\b/),
+    _ts_metadata("design:type", String)
 ], CardOwner.prototype, "pan", void 0);
-exports.CardOwner = CardOwner;
+
 //# sourceMappingURL=card.dto.js.map

@@ -1,37 +1,90 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.App = void 0;
-const tslib_1 = require("tslib");
-require("reflect-metadata");
-const compression_1 = tslib_1.__importDefault(require("compression"));
-const cookie_parser_1 = tslib_1.__importDefault(require("cookie-parser"));
-const cors_1 = tslib_1.__importDefault(require("cors"));
-const express_1 = tslib_1.__importDefault(require("express"));
-const helmet_1 = tslib_1.__importDefault(require("helmet"));
-const hpp_1 = tslib_1.__importDefault(require("hpp"));
-const useragent = tslib_1.__importStar(require("express-useragent"));
-const swagger_jsdoc_1 = tslib_1.__importDefault(require("swagger-jsdoc"));
-const swagger_ui_express_1 = tslib_1.__importDefault(require("swagger-ui-express"));
-const _config_1 = require("@config");
-const error_middleware_1 = require("@middlewares/error.middleware");
-// import { logger, stream } from '@utils/logger';
-const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
-class App {
-    constructor(routes) {
-        this.app = (0, express_1.default)();
-        this.env = _config_1.NODE_ENV || 'development';
-        this.port = _config_1.PORT || 3000;
-        this.initializeMiddlewares();
-        this.initializeRoutes(routes);
-        this.initializeSwagger();
-        this.initializeErrorHandling();
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "App", {
+    enumerable: true,
+    get: function() {
+        return App;
     }
+});
+require("reflect-metadata");
+const _compression = /*#__PURE__*/ _interop_require_default(require("compression"));
+const _cookieparser = /*#__PURE__*/ _interop_require_default(require("cookie-parser"));
+const _cors = /*#__PURE__*/ _interop_require_default(require("cors"));
+const _express = /*#__PURE__*/ _interop_require_default(require("express"));
+const _helmet = /*#__PURE__*/ _interop_require_default(require("helmet"));
+const _hpp = /*#__PURE__*/ _interop_require_default(require("hpp"));
+const _expressuseragent = /*#__PURE__*/ _interop_require_wildcard(require("express-useragent"));
+const _swaggerjsdoc = /*#__PURE__*/ _interop_require_default(require("swagger-jsdoc"));
+const _swaggeruiexpress = /*#__PURE__*/ _interop_require_default(require("swagger-ui-express"));
+const _config = require("./config");
+const _errormiddleware = require("./middlewares/error.middleware");
+const _expressfileupload = /*#__PURE__*/ _interop_require_default(require("express-fileupload"));
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+function _interop_require_default(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
+function _getRequireWildcardCache(nodeInterop) {
+    if (typeof WeakMap !== "function") return null;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function(nodeInterop) {
+        return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
+}
+function _interop_require_wildcard(obj, nodeInterop) {
+    if (!nodeInterop && obj && obj.__esModule) {
+        return obj;
+    }
+    if (obj === null || typeof obj !== "object" && typeof obj !== "function") {
+        return {
+            default: obj
+        };
+    }
+    var cache = _getRequireWildcardCache(nodeInterop);
+    if (cache && cache.has(obj)) {
+        return cache.get(obj);
+    }
+    var newObj = {};
+    var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+    for(var key in obj){
+        if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+            var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+            if (desc && (desc.get || desc.set)) {
+                Object.defineProperty(newObj, key, desc);
+            } else {
+                newObj[key] = obj[key];
+            }
+        }
+    }
+    newObj.default = obj;
+    if (cache) {
+        cache.set(obj, newObj);
+    }
+    return newObj;
+}
+let App = class App {
     listen() {
-        this.app.listen(this.port, () => {
-            // logger.info(`=================================`);
-            // logger.info(`======= ENV: ${this.env} =======`);
-            // logger.info(`🚀 App listening on the port ${this.port}`);
-            // logger.info(`=================================`);
+        this.app.listen(this.port, ()=>{
+        // logger.info(`=================================`);
+        // logger.info(`======= ENV: ${this.env} =======`);
+        // logger.info(`🚀 App listening on the port ${this.port}`);
+        // logger.info(`=================================`);
         });
     }
     getServer() {
@@ -39,18 +92,23 @@ class App {
     }
     initializeMiddlewares() {
         // this.app.use(morgan(LOG_FORMAT, { stream }));
-        this.app.use((0, cors_1.default)({ origin: _config_1.ORIGIN, credentials: _config_1.CREDENTIALS }));
-        this.app.use((0, hpp_1.default)());
-        this.app.use((0, helmet_1.default)());
-        this.app.use((0, compression_1.default)());
-        this.app.use(express_1.default.json());
-        this.app.use((0, express_fileupload_1.default)());
-        this.app.use(express_1.default.urlencoded({ extended: true }));
-        this.app.use((0, cookie_parser_1.default)());
-        this.app.use(useragent.express());
+        this.app.use((0, _cors.default)({
+            origin: _config.ORIGIN,
+            credentials: _config.CREDENTIALS
+        }));
+        this.app.use((0, _hpp.default)());
+        this.app.use((0, _helmet.default)());
+        this.app.use((0, _compression.default)());
+        this.app.use(_express.default.json());
+        this.app.use((0, _expressfileupload.default)());
+        this.app.use(_express.default.urlencoded({
+            extended: true
+        }));
+        this.app.use((0, _cookieparser.default)());
+        this.app.use(_expressuseragent.express());
     }
     initializeRoutes(routes) {
-        routes.forEach(route => {
+        routes.forEach((route)=>{
             this.app.use('/', route.router);
         });
     }
@@ -60,17 +118,31 @@ class App {
                 info: {
                     title: 'REST API',
                     version: '1.0.0',
-                    description: 'Example docs',
-                },
+                    description: 'Example docs'
+                }
             },
-            apis: ['swagger.yaml'],
+            apis: [
+                'swagger.yaml'
+            ]
         };
-        const specs = (0, swagger_jsdoc_1.default)(options);
-        this.app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(specs));
+        const specs = (0, _swaggerjsdoc.default)(options);
+        this.app.use('/api-docs', _swaggeruiexpress.default.serve, _swaggeruiexpress.default.setup(specs));
     }
     initializeErrorHandling() {
-        this.app.use(error_middleware_1.ErrorMiddleware);
+        this.app.use(_errormiddleware.ErrorMiddleware);
     }
-}
-exports.App = App;
+    constructor(routes){
+        _define_property(this, "app", void 0);
+        _define_property(this, "env", void 0);
+        _define_property(this, "port", void 0);
+        this.app = (0, _express.default)();
+        this.env = _config.NODE_ENV || 'development';
+        this.port = _config.PORT || 3000;
+        this.initializeMiddlewares();
+        this.initializeRoutes(routes);
+        this.initializeSwagger();
+        this.initializeErrorHandling();
+    }
+};
+
 //# sourceMappingURL=app.js.map

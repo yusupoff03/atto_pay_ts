@@ -1,73 +1,143 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.VerifyDto = exports.LoginQr = exports.LoginTypeDto = exports.CustomerLoginDto = exports.UpdateCustomerDto = exports.CreateCustomerDto = void 0;
-const tslib_1 = require("tslib");
-const class_validator_1 = require("class-validator");
-class CreateCustomerDto {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
 }
-tslib_1.__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+_export(exports, {
+    CreateCustomerDto: function() {
+        return CreateCustomerDto;
+    },
+    UpdateCustomerDto: function() {
+        return UpdateCustomerDto;
+    },
+    CustomerLoginDto: function() {
+        return CustomerLoginDto;
+    },
+    LoginTypeDto: function() {
+        return LoginTypeDto;
+    },
+    LoginQr: function() {
+        return LoginQr;
+    },
+    VerifyDto: function() {
+        return VerifyDto;
+    }
+});
+const _classvalidator = require("class-validator");
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    } else {
+        obj[key] = value;
+    }
+    return obj;
+}
+function _ts_decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for(var i = decorators.length - 1; i >= 0; i--)if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function _ts_metadata(k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+}
+let CreateCustomerDto = class CreateCustomerDto {
+    constructor(){
+        _define_property(this, "name", void 0);
+        _define_property(this, "phone", void 0);
+        _define_property(this, "password", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], CreateCustomerDto.prototype, "name", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(6),
-    (0, class_validator_1.MaxLength)(32),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.MinLength)(6),
+    (0, _classvalidator.MaxLength)(32),
+    _ts_metadata("design:type", String)
 ], CreateCustomerDto.prototype, "password", void 0);
-exports.CreateCustomerDto = CreateCustomerDto;
-class UpdateCustomerDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+let UpdateCustomerDto = class UpdateCustomerDto {
+    constructor(){
+        _define_property(this, "name", void 0);
+        _define_property(this, "image", void 0);
+        _define_property(this, "deleteImage", void 0);
+        _define_property(this, "gender", void 0);
+        _define_property(this, "birthDate", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], UpdateCustomerDto.prototype, "name", void 0);
-exports.UpdateCustomerDto = UpdateCustomerDto;
-class CustomerLoginDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    tslib_1.__metadata("design:type", String)
+let CustomerLoginDto = class CustomerLoginDto {
+    constructor(){
+        _define_property(this, "phone", void 0);
+        _define_property(this, "password", void 0);
+        _define_property(this, "otp", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
 ], CustomerLoginDto.prototype, "phone", void 0);
-exports.CustomerLoginDto = CustomerLoginDto;
-class LoginTypeDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(12),
-    (0, class_validator_1.MaxLength)(12),
-    (0, class_validator_1.Matches)(/^998\d{9}$/, {
-        message: ` `,
+let LoginTypeDto = class LoginTypeDto {
+    constructor(){
+        _define_property(this, "phone", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.MinLength)(12),
+    (0, _classvalidator.MaxLength)(12),
+    (0, _classvalidator.Matches)(/^998\d{9}$/, {
+        message: ` `
     }),
-    tslib_1.__metadata("design:type", String)
+    _ts_metadata("design:type", String)
 ], LoginTypeDto.prototype, "phone", void 0);
-exports.LoginTypeDto = LoginTypeDto;
-class LoginQr {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+let LoginQr = class LoginQr {
+    constructor(){
+        _define_property(this, "key", void 0);
+        _define_property(this, "allowDeviceId", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], LoginQr.prototype, "key", void 0);
-tslib_1.__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    tslib_1.__metadata("design:type", String)
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
 ], LoginQr.prototype, "allowDeviceId", void 0);
-exports.LoginQr = LoginQr;
-class VerifyDto {
-}
-tslib_1.__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Matches)(/^998\d{9}$/, {
-        message: ` `,
+let VerifyDto = class VerifyDto {
+    constructor(){
+        _define_property(this, "phone", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.Matches)(/^998\d{9}$/, {
+        message: ` `
     }),
-    tslib_1.__metadata("design:type", String)
+    _ts_metadata("design:type", String)
 ], VerifyDto.prototype, "phone", void 0);
-exports.VerifyDto = VerifyDto;
+
 //# sourceMappingURL=customer.dto.js.map
