@@ -1,4 +1,3 @@
-import { hash } from 'bcrypt';
 import { Service } from 'typedi';
 import pg from '@database';
 import { HttpException } from '@exceptions/httpException';
@@ -7,21 +6,18 @@ import { FileUploader } from '@utils/imageStorage';
 import { RedisClient } from '@/database/redis';
 import { CustomError } from '@exceptions/CustomError';
 import moment from 'moment';
-
+import { LoginQr, VerifyDto } from '@dtos/customer.dto';
+import { createToken } from '@services/auth.service';
+import { TokenData } from '@interfaces/auth.interface';
+import io from '@/socket/socket';
+import { Request } from 'express';
+import { sendVerification } from '@services/sms.service';
 @Service()
 export class CustomerService {
   private redis: RedisClient;
   constructor() {
     this.redis = new RedisClient();
   }
-  public async findAllCustomer(): Promise<Customer[]> {
-    const { rows } = await pg.query(`
-      SELECT *
-      FROM customer
-    `);
-    return rows;
-  }
-
   public async findCustomerById(customerId: string): Promise<Customer> {
     const { rows, rowCount } = await pg.query(
       `
@@ -110,7 +106,13 @@ export class CustomerService {
       throw error;
     }
   }
-
+  public static async getDeviceInfo(req: any): Promise<string> {
+    let { os, platform } = req.useragent;
+    const { browser, version } = req.useragent;
+    platform = platform === 'unknown' ? '' : platform;
+    os = os === 'unknown' ? '' : os;
+    return `${platform} ${os} ${browser} ${version}`.trim();
+  }
   public async getOtp(phone: string): Promise<string> {
     await this.redis.hGet('otp', phone, (err, otp) => {
       if (err) throw new HttpException(403, err.message);
@@ -135,11 +137,68 @@ on conflict do nothing`,
     }
     await pg.query(`delete from customer_saved_service where customer_id  =$1 and service_id =$2`, [customerId, serviceId]);
   }
-  async updateCustomerLang(customerId: string, lang: string): Promise<boolean> {
+  public async updateCustomerLang(customerId: string, lang: string): Promise<boolean> {
     const { rows } = await pg.query(`Select * from customer where id = $1`, [customerId]);
     if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
 
     await pg.query(`Update customer set lang = $1 where id = $2`, [lang, customerId]);
     return true;
+  }
+  public async loginWithQr(qrLogin: LoginQr, customerId: string): Promise<void> {
+    const redisQr = await this.redis.hGet('qr_login', customerId);
+    if (!redisQr) throw new CustomError('INVALID_REQUEST');
+    const qrObject = JSON.parse(redisQr);
+    if (qrObject.key !== qrLogin.key) throw new CustomError('INVALID_REQUEST');
+    const { rows } = await pg.query(`Select * from customer where id=$1`, [customerId]);
+    if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
+    const customer: Customer = rows[0];
+    const tokenData: TokenData = createToken(customer);
+    io.to(qrObject.socketId).emit(tokenData.token);
+    return;
+  }
+  public async getDevices(customerId: string): Promise<any> {
+    const { rows } = await pg.query(`Select * from customer_device where customer_id =$1`, [customerId]);
+    return rows;
+  }
+  public async deleteCustomerDevice(deviceId, customerId: string, lang: string): Promise<string> {
+    const { rows } = await pg.query(`Select * from customer_device where device_id = $1 and customer_id = $2`, [deviceId, customerId]);
+    if (!rows[0]) {
+      throw new CustomError('ALLOWED_FOR_TRUSTED');
+    }
+    const { rows: message } = await pg.query(
+      `delete from customer_device
+    where id = $1 and customer_id = $2
+    returning (select message from message where name = 'UNTRUST_SUCCESS') as message`,
+      [rows[0].id, customerId],
+    );
+    if (!message[0]) throw new CustomError('DATABASE_ERROR');
+    return message[0].message[lang];
+  }
+  public async sendCodeToPhone(verify: VerifyDto, deviceId, resend): Promise<any> {
+    const redisCode = await this.redis.hGet('customer_otp', JSON.stringify({ phone: verify.phone, deviceId }));
+    const codeObject = JSON.parse(redisCode);
+    const codeObject1 = {
+      code: Math.floor(100000 + Math.random() * 900000),
+      expiresAt: moment().add(2, 'minutes').valueOf(),
+      numAttempt: 0,
+    };
+    const device_phone = {
+      phone: verify.phone,
+      deviceId: deviceId,
+    };
+    if (!redisCode || moment().isAfter(codeObject.expiresAt)) {
+      await this.redis.hSet('customer_otp', JSON.stringify(device_phone), JSON.stringify(codeObject1));
+      await sendVerification(device_phone.phone, codeObject1.code);
+      return moment(codeObject1.expiresAt).diff(moment(), 'seconds');
+    }
+    if (redisCode && resend) {
+      if (moment().isAfter(codeObject.expiresAt)) {
+        await this.redis.hSet('customer_otp', JSON.stringify(device_phone), JSON.stringify(codeObject1));
+        await sendVerification(device_phone.phone, codeObject1.code);
+        return moment(codeObject1.expiresAt).diff(moment(), 'seconds');
+      }
+      const timeLeft = moment(codeObject.expiresAt).diff(moment(), 'seconds');
+      throw new CustomError('CODE_ALREADY_SEND', null, { timeLeft });
+    }
   }
 }

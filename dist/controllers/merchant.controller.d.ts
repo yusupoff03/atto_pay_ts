@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { MerchantService } from '../services/merchant.service';
+import { MerchantService } from '@services/merchant.service';
 export declare class MerchantController {
     merchant: MerchantService;
     getMerchantProfile: (req: Request, res: Response, next: NextFunction) => Promise<void>;

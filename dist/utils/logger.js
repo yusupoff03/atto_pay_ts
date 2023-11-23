@@ -6,7 +6,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const winston_1 = tslib_1.__importDefault(require("winston"));
 const winston_daily_rotate_file_1 = tslib_1.__importDefault(require("winston-daily-rotate-file"));
-const _config_1 = require("../config");
+const _config_1 = require("@config");
 // logs dir
 const logDir = (0, path_1.join)(_config_1.LOG_DIR, '/logs');
 if (!(0, fs_1.existsSync)(logDir)) {

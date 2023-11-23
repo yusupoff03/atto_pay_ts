@@ -6,19 +6,22 @@ import { DataStoredInToken } from '@interfaces/auth.interface';
 import { SECRET_KEY } from '@config';
 import { verify } from 'jsonwebtoken';
 import { FileUploader } from '@utils/imageStorage';
+import { LoginQr, VerifyDto } from '@dtos/customer.dto';
 
 export class CustomersController {
   public customer = Container.get(CustomerService);
-
-  public getCustomers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public loginWithQr = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const findAllCustomersData: Customer[] = await this.customer.findAllCustomer();
-      res.status(200).json({ data: findAllCustomersData, message: 'findAll' });
+      const qrLogin: LoginQr = req.body;
+      const customerId = this.getCustomerId(req);
+      await this.customer.loginWithQr(qrLogin, customerId);
+      res.status(200).json({
+        success: true,
+      });
     } catch (error) {
       next(error);
     }
   };
-
   public getCustomerById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerId = this.getCustomerId(req);
@@ -99,6 +102,46 @@ export class CustomersController {
       const otp = await this.customer.getOtp(phone);
       res.status(200).json({
         otp: otp,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public getDevices = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const customerId = this.getCustomerId(req);
+      const rows = await this.customer.getDevices(customerId);
+      res.status(200).json({
+        success: true,
+        rows,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public deleteCustomerDevice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deviceId = req.headers['x-device-id'];
+      const customerId = this.getCustomerId(req);
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      console.log(deviceId);
+      const message: string = await this.customer.deleteCustomerDevice(deviceId, customerId, lang);
+      res.status(200).json({
+        success: true,
+        message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public sendCodeToPhone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const deviceId = req.headers['x-device-id'];
+      const verify: VerifyDto = req.body;
+      await this.customer.sendCodeToPhone(verify, deviceId, true);
+      res.status(200).json({
+        success: true,
+        timeLeft: 120,
       });
     } catch (error) {
       next(error);

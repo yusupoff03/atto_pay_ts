@@ -4,6 +4,7 @@ import { RequestWithCustomer } from '@interfaces/auth.interface';
 import { Customer, CustomerLogin } from '@interfaces/customers.interface';
 import { AuthService } from '@services/auth.service';
 import { Merchant } from '@interfaces/merchant.interface';
+import { CustomerService } from '@services/customers.service';
 
 export class AuthController {
   public auth = Container.get(AuthService);
@@ -13,7 +14,8 @@ export class AuthController {
       const customerData: Customer = req.body;
       const trust: boolean = req.body.trust || false;
       const uid: string = req.headers['x-device-id'] as string;
-      const { token, customer } = await this.auth.signup(customerData, trust, uid);
+      const info: string = await CustomerService.getDeviceInfo(req);
+      const { token, customer } = await this.auth.signup(customerData, info, trust, uid);
       res.status(201).json({ token: token, data: customer, message: 'signup' });
     } catch (error) {
       next(error);
@@ -24,7 +26,8 @@ export class AuthController {
     try {
       const customerData: CustomerLogin = req.body;
       const deviceId: string = req.headers['x-device-id'] as string;
-      const { tokenData, findCustomer } = await this.auth.login(customerData, deviceId);
+      const deviceInfo = await CustomerService.getDeviceInfo(req);
+      const { tokenData, findCustomer } = await this.auth.login(customerData, deviceId, deviceInfo);
       res.status(200).json({ token: tokenData.token, data: findCustomer, message: 'login' });
     } catch (error) {
       next(error);
@@ -34,10 +37,11 @@ export class AuthController {
     try {
       const { phone } = req.body;
       const deviceId = req.headers['x-device-id'] as string;
-      const { password, otp } = await this.auth.getLoginType(phone, deviceId);
+      const { password, otp, timeLeft } = await this.auth.getLoginType(phone, deviceId);
       res.status(200).json({
         password: password,
         otp: otp,
+        timeLeft: timeLeft,
       });
     } catch (error) {
       next(error);

@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CardsController = void 0;
 const typedi_1 = require("typedi");
-const cards_service_1 = require("../services/cards.service");
+const cards_service_1 = require("@services/cards.service");
 const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
+const _config_1 = require("@config");
 class CardsController {
     constructor() {
         this.card = typedi_1.Container.get(cards_service_1.CardsService);

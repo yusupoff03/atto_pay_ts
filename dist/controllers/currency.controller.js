@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CurrencyController = void 0;
 const typedi_1 = require("typedi");
-const currency_service_1 = require("../services/currency,service");
+const currency_service_1 = require("@services/currency,service");
 class CurrencyController {
     constructor() {
         this.currency = typedi_1.Container.get(currency_service_1.CurrencyService);

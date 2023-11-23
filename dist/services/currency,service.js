@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CurrencyService = void 0;
 const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const httpException_1 = require("../exceptions/httpException");
+const _database_1 = tslib_1.__importDefault(require("@database"));
+const httpException_1 = require("@exceptions/httpException");
 let CurrencyService = class CurrencyService {
     async createCurrency(currencyDto) {
         const { name, abbreviation } = currencyDto;

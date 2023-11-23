@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MerchantController = void 0;
 const typedi_1 = require("typedi");
-const merchant_service_1 = require("../services/merchant.service");
+const merchant_service_1 = require("@services/merchant.service");
 const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
-const CustomError_1 = require("../exceptions/CustomError");
+const _config_1 = require("@config");
+const CustomError_1 = require("@exceptions/CustomError");
 class MerchantController {
     constructor() {
         this.merchant = typedi_1.Container.get(merchant_service_1.MerchantService);

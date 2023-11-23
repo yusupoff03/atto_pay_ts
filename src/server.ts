@@ -8,6 +8,8 @@ import { CategoryRoute } from '@routes/category.route';
 import { MerchantRoute } from '@routes/merchant.route';
 import { ServiceRoute } from '@routes/service.route';
 import { TransactionRoute } from '@routes/transaction.route';
+import http from 'http';
+import io from '@/socket/socket';
 
 ValidateEnv();
 const app = new App([
@@ -20,5 +22,7 @@ const app = new App([
   new ServiceRoute(),
   new TransactionRoute(),
 ]);
+const server = http.createServer(app.getServer());
+io.attach(server);
 console.log('Server is up');
-app.listen();
+server.listen(3000);

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileUploader = void 0;
 const client_s3_1 = require("@aws-sdk/client-s3");
-const httpException_1 = require("../exceptions/httpException");
+const httpException_1 = require("@exceptions/httpException");
 class FileUploader {
     constructor(region, bucketName) {
         this.region = region;

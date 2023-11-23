@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const supertest_1 = tslib_1.__importDefault(require("supertest"));
-const app_1 = require("../app");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const customers_route_1 = require("../routes/customers.route");
+const app_1 = require("@/app");
+const _database_1 = tslib_1.__importDefault(require("@database"));
+const customers_route_1 = require("@routes/customers.route");
 afterAll(async () => {
     await new Promise(resolve => setTimeout(() => resolve(), 500));
     await _database_1.default.end();

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { CurrencyService } from '../services/currency,service';
+import { CurrencyService } from '@services/currency,service';
 export declare class CurrencyController {
     currency: CurrencyService;
     getCurrency: (req: Request, res: Response, next: NextFunction) => Promise<void>;

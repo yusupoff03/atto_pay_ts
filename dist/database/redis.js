@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisClient = void 0;
 const redis_1 = require("redis");
-const _config_1 = require("../config");
+const _config_1 = require("@config");
 class RedisClient {
     constructor() {
         this.client = (0, redis_1.createClient)({

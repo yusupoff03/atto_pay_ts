@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceController = void 0;
 const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
-const httpException_1 = require("../exceptions/httpException");
-const service_service_1 = require("../services/service.service");
+const _config_1 = require("@config");
+const httpException_1 = require("@exceptions/httpException");
+const service_service_1 = require("@services/service.service");
 const typedi_1 = require("typedi");
 class ServiceController {
     constructor() {

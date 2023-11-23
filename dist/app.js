@@ -9,11 +9,12 @@ const cors_1 = tslib_1.__importDefault(require("cors"));
 const express_1 = tslib_1.__importDefault(require("express"));
 const helmet_1 = tslib_1.__importDefault(require("helmet"));
 const hpp_1 = tslib_1.__importDefault(require("hpp"));
+const useragent = tslib_1.__importStar(require("express-useragent"));
 const swagger_jsdoc_1 = tslib_1.__importDefault(require("swagger-jsdoc"));
 const swagger_ui_express_1 = tslib_1.__importDefault(require("swagger-ui-express"));
-const _config_1 = require("./config");
-const error_middleware_1 = require("./middlewares/error.middleware");
-// import { logger, stream } from './utils/logger';
+const _config_1 = require("@config");
+const error_middleware_1 = require("@middlewares/error.middleware");
+// import { logger, stream } from '@utils/logger';
 const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
 class App {
     constructor(routes) {
@@ -46,6 +47,7 @@ class App {
         this.app.use((0, express_fileupload_1.default)());
         this.app.use(express_1.default.urlencoded({ extended: true }));
         this.app.use((0, cookie_parser_1.default)());
+        this.app.use(useragent.express());
     }
     initializeRoutes(routes) {
         routes.forEach(route => {

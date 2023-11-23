@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionRoute = void 0;
 const express_1 = require("express");
-const transaction_controller_1 = require("../controllers/transaction.controller");
-const auth_middleware_1 = require("../middlewares/auth.middleware");
-const validation_middleware_1 = require("../middlewares/validation.middleware");
-const transaction_dto_1 = require("../dtos/transaction.dto");
+const transaction_controller_1 = require("@controllers/transaction.controller");
+const auth_middleware_1 = require("@middlewares/auth.middleware");
+const validation_middleware_1 = require("@middlewares/validation.middleware");
+const transaction_dto_1 = require("@dtos/transaction.dto");
 class TransactionRoute {
     constructor() {
         this.path = '/transaction';

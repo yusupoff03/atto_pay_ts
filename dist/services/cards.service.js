@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CardsService = void 0;
 const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const CustomError_1 = require("../exceptions/CustomError");
-const test_1 = require("../test");
+const _database_1 = tslib_1.__importDefault(require("@database"));
+const CustomError_1 = require("@exceptions/CustomError");
+const test_1 = require("@/test");
 let CardsService = class CardsService {
     async createCard(cardDto, customerId, lang) {
         const name = cardDto.name;

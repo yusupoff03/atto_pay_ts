@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoryRoute = void 0;
 const express_1 = require("express");
-const category_controller_1 = require("../controllers/category.controller");
+const category_controller_1 = require("@controllers/category.controller");
 class CategoryRoute {
     constructor() {
         this.path = '/category';

@@ -1,4 +1,4 @@
-import { ServiceService } from '../services/service.service';
+import { ServiceService } from '@services/service.service';
 import { NextFunction, Request, Response } from 'express';
 export declare class ServiceController {
     service: ServiceService;

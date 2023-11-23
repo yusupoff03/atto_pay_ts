@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceService = void 0;
 const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const imageStorage_1 = require("../utils/imageStorage");
-const CustomError_1 = require("../exceptions/CustomError");
+const _database_1 = tslib_1.__importDefault(require("@database"));
+const imageStorage_1 = require("@utils/imageStorage");
+const CustomError_1 = require("@exceptions/CustomError");
 const base64url_1 = tslib_1.__importDefault(require("base64url"));
 const crypto = tslib_1.__importStar(require("crypto"));
 let ServiceService = class ServiceService {

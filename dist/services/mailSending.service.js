@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MailSendingService = void 0;
 const tslib_1 = require("tslib");
 const nodemailer_1 = tslib_1.__importDefault(require("nodemailer"));
+const CustomError_1 = require("@exceptions/CustomError");
 class MailSendingService {
     static async mailSender(email, code) {
         const transporter = nodemailer_1.default.createTransport({
@@ -20,7 +21,7 @@ class MailSendingService {
         };
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.log('Error:', error);
+                throw new CustomError_1.CustomError(error.message);
             }
             else {
                 console.log('Email sent:', info.response);

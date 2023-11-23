@@ -3,12 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionService = void 0;
 const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
-const database_1 = tslib_1.__importDefault(require("../database"));
-const CustomError_1 = require("../exceptions/CustomError");
-const imageStorage_1 = require("../utils/imageStorage");
+const database_1 = tslib_1.__importDefault(require("database"));
+const CustomError_1 = require("@exceptions/CustomError");
+const imageStorage_1 = require("@utils/imageStorage");
 const moment_1 = tslib_1.__importDefault(require("moment"));
 const pg_1 = require("pg");
-const _config_1 = require("../config");
+const _config_1 = require("@config");
 let TransactionService = class TransactionService {
     async payForService(customerId, serviceId, cardId, amount, fields) {
         const pool = new pg_1.Pool({

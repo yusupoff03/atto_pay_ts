@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const typedi_1 = require("typedi");
-const auth_service_1 = require("../services/auth.service");
+const auth_service_1 = require("@services/auth.service");
+const customers_service_1 = require("@services/customers.service");
 class AuthController {
     constructor() {
         this.auth = typedi_1.Container.get(auth_service_1.AuthService);
@@ -11,7 +12,8 @@ class AuthController {
                 const customerData = req.body;
                 const trust = req.body.trust || false;
                 const uid = req.headers['x-device-id'];
-                const { token, customer } = await this.auth.signup(customerData, trust, uid);
+                const info = await customers_service_1.CustomerService.getDeviceInfo(req);
+                const { token, customer } = await this.auth.signup(customerData, info, trust, uid);
                 res.status(201).json({ token: token, data: customer, message: 'signup' });
             }
             catch (error) {
@@ -22,7 +24,8 @@ class AuthController {
             try {
                 const customerData = req.body;
                 const deviceId = req.headers['x-device-id'];
-                const { tokenData, findCustomer } = await this.auth.login(customerData, deviceId);
+                const deviceInfo = await customers_service_1.CustomerService.getDeviceInfo(req);
+                const { tokenData, findCustomer } = await this.auth.login(customerData, deviceId, deviceInfo);
                 res.status(200).json({ token: tokenData.token, data: findCustomer, message: 'login' });
             }
             catch (error) {
@@ -33,10 +36,11 @@ class AuthController {
             try {
                 const { phone } = req.body;
                 const deviceId = req.headers['x-device-id'];
-                const { password, otp } = await this.auth.getLoginType(phone, deviceId);
+                const { password, otp, timeLeft } = await this.auth.getLoginType(phone, deviceId);
                 res.status(200).json({
                     password: password,
                     otp: otp,
+                    timeLeft: timeLeft,
                 });
             }
             catch (error) {

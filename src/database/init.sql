@@ -23,6 +23,8 @@ create table if not exists customer_device(
 id serial primary key,
 customer_id uuid not null references customer(id),
 device_id varchar(64) not null,
+name varchar(128) not null,
+last_login timestamp not null default now(),
 constraint unique_customer_device unique(customer_id, device_id)
 );
 create table if not exists customer_card(
@@ -490,7 +492,11 @@ insert into message(name, message, http_code) values
 ('SAME_FIELD_NAME', '{"en": "Field name cannot be same", "uz": "Maydon nomi bir xil bo''lishi mumkin emas", "ru": "Название поля не может быть одинаковым"}', 409),
 ('TOO_MANY_TRIES', '{"en": "Too many tries", "uz": "Juda ko''p urinishlar", "ru": "Слишком много попыток"}', 403),
 ('TRY_AGAIN_AFTER', '{"en": "Try again after {0} seconds", "uz": "{0} sekunddan keyin urinib ko''ring", "ru": "Попробуйте снова через {0} секунд"}', 403),
-('INVALID_CARD_NUMBER','{"en": "Incorrect card number", "uz": "Karta raqami xato kiritildi", "ru": "Неверный номер карты"}', 400)
+('INVALID_CARD_NUMBER','{"en": "Incorrect card number", "uz": "Karta raqami xato kiritildi", "ru": "Неверный номер карты"}', 400),
+('ALLOWED_FOR_TRUSTED', '{"en": "This action is allowed only for trusted devices", "uz": "Ushbu amal faqat ishonchli qurilmalar uchun ruxsat etilgan", "ru": "Это действие разрешено только для доверенных устройств"}', 403),
+('UNTRUST_SUCCESS', '{"en": "Removed from trusted devices", "uz": "Ishonchli qurilmalardan olib tashlandi", "ru": "Удалено из доверенных устройств"}', 200),
+('SESSIONS_ENDED', '{"en": "Terminated all other sessions", "uz": "Boshqa sessiyalarni tugatildi", "ru": "Завершены все другие сессии"}', 200),
+('QR_LOGIN_SUCCESS', '{"en": "QR login successful", "uz": "QR login muvaffaqiyatli amalga oshirildi", "ru": "QR логин прошел успешно"}', 200)
 on conflict do nothing;
 
 insert into service_category(code, name) values

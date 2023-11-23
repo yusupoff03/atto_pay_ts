@@ -18,3 +18,10 @@ export declare class CustomerLoginDto {
 export declare class LoginTypeDto {
     phone: string;
 }
+export declare class LoginQr {
+    key: string;
+    allowDeviceId: string;
+}
+export declare class VerifyDto {
+    phone: string;
+}

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { CustomError } from '@exceptions/CustomError';
 export class MailSendingService {
   public static async mailSender(email, code) {
     const transporter = nodemailer.createTransport({
@@ -19,7 +20,7 @@ export class MailSendingService {
 
       (error, info) => {
         if (error) {
-          console.log('Error:', error);
+          throw new CustomError(error.message);
         } else {
           console.log('Email sent:', info.response);
         }

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { CardsService } from '../services/cards.service';
+import { CardsService } from '@services/cards.service';
 export declare class CardsController {
     card: CardsService;
     createCard: (req: Request, res: Response, next: NextFunction) => Promise<void>;

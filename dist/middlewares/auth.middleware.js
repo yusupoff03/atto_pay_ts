@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthMiddleware = void 0;
 const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
-const CustomError_1 = require("../exceptions/CustomError");
+const _config_1 = require("@config");
+const CustomError_1 = require("@exceptions/CustomError");
 const getAuthorization = req => {
     const cookie = req.headers.authorization;
     if (cookie)

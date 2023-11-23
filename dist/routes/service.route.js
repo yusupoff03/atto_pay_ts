@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceRoute = void 0;
 const express_1 = require("express");
-const service_controller_1 = require("../controllers/service.controller");
-const auth_middleware_1 = require("../middlewares/auth.middleware");
+const service_controller_1 = require("@controllers/service.controller");
+const auth_middleware_1 = require("@middlewares/auth.middleware");
 class ServiceRoute {
     constructor() {
         this.path = '/service';

@@ -7,6 +7,7 @@ export interface Customer {
   password?: string;
   hashed_password?: string;
   balance?: number;
+  otp: string;
 }
 export interface UpdateCustomerData {
   name: string;

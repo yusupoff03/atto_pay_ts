@@ -1,15 +1,16 @@
-import axios from "axios";
-import { CustomError } from "@exceptions/CustomError";
+import axios from 'axios';
+import { CustomError } from '@exceptions/CustomError';
+import { CRM_API_URL } from '@config';
 
 export async function request(cardNumber) {
-  const url = `https://atto.crm24.uz/v1.0/terminal/top-up/check?cardNumber=${cardNumber}`;
+  const url = `${CRM_API_URL}/terminal/top-up/check?cardNumber=${cardNumber}`;
 
   const options = {
     method: 'GET',
     url: url,
     headers: {
       'Content-Type': 'application/json',
-      access_token: 'dn3aucbnmk8xa7d7yuahtkv8ze794u',
+      access_token: 'wddcvzlfsjakndi6y0obqg8xd06iau',
     },
     data: {
       login: 'faresaler',

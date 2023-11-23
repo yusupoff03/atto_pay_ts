@@ -1,4 +1,4 @@
-import { CreateCardDto, CardUpdateDto } from '../dtos/card.dto';
+import { CreateCardDto, CardUpdateDto } from '@dtos/card.dto';
 export declare class CardsService {
     createCard(cardDto: CreateCardDto, customerId: string, lang: any): Promise<any>;
     getCustomerCards(customerId: string): Promise<any[]>;

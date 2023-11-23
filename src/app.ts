@@ -5,7 +5,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import hpp from 'hpp';
-import morgan from 'morgan';
+import * as useragent from 'express-useragent';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS } from '@config';
@@ -53,6 +53,7 @@ export class App {
     this.app.use(fileupload());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
+    this.app.use(useragent.express());
   }
 
   private initializeRoutes(routes: Routes[]) {

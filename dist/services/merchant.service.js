@@ -3,10 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MerchantService = void 0;
 const tslib_1 = require("tslib");
 const typedi_1 = require("typedi");
-const _database_1 = tslib_1.__importDefault(require("../database"));
-const httpException_1 = require("../exceptions/httpException");
-const CustomError_1 = require("../exceptions/CustomError");
-const redis_1 = tslib_1.__importDefault(require("../database/redis"));
+const _database_1 = tslib_1.__importDefault(require("@database"));
+const httpException_1 = require("@exceptions/httpException");
+const CustomError_1 = require("@exceptions/CustomError");
+const redis_1 = tslib_1.__importDefault(require("@/database/redis"));
 let MerchantService = class MerchantService {
     constructor() {
         this.redis = new redis_1.default();

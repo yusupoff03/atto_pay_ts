@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { RequestWithCustomer } from '../interfaces/auth.interface';
-import { AuthService } from '../services/auth.service';
+import { RequestWithCustomer } from '@interfaces/auth.interface';
+import { AuthService } from '@services/auth.service';
 export declare class AuthController {
     auth: AuthService;
     signUp: (req: Request, res: Response, next: NextFunction) => Promise<void>;

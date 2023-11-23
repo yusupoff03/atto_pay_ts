@@ -3,15 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.request = void 0;
 const tslib_1 = require("tslib");
 const axios_1 = tslib_1.__importDefault(require("axios"));
-const CustomError_1 = require("./exceptions/CustomError");
+const CustomError_1 = require("@exceptions/CustomError");
+const _config_1 = require("@config");
 async function request(cardNumber) {
-    const url = `https://atto.crm24.uz/v1.0/terminal/top-up/check?cardNumber=${cardNumber}`;
+    const url = `${_config_1.CRM_API_URL}/terminal/top-up/check?cardNumber=${cardNumber}`;
     const options = {
         method: 'GET',
         url: url,
         headers: {
             'Content-Type': 'application/json',
-            access_token: 'dn3aucbnmk8xa7d7yuahtkv8ze794u',
+            access_token: 'wddcvzlfsjakndi6y0obqg8xd06iau',
         },
         data: {
             login: 'faresaler',

@@ -1,4 +1,4 @@
-import { CurrencyCreateDto, CurrencyUpdateDto } from '../dtos/currency.dto';
+import { CurrencyCreateDto, CurrencyUpdateDto } from '@dtos/currency.dto';
 export declare class CurrencyService {
     createCurrency(currencyDto: CurrencyCreateDto): Promise<any>;
     updateCurrency(currencyUpdateDto: CurrencyUpdateDto): Promise<any>;

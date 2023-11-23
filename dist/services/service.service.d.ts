@@ -1,4 +1,4 @@
-import { ServiceInterface, ServiceUpdate } from '../interfaces/service.interface';
+import { ServiceInterface, ServiceUpdate } from '@interfaces/service.interface';
 export declare class ServiceService {
     private fileUploader;
     constructor();

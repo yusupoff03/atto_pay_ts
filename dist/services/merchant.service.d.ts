@@ -1,4 +1,4 @@
-import { Merchant } from '../interfaces/merchant.interface';
+import { Merchant } from '@interfaces/merchant.interface';
 export declare class MerchantService {
     private redis;
     constructor();

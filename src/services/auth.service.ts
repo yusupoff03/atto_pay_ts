@@ -12,8 +12,10 @@ import moment from 'moment';
 import bcrypt from 'bcrypt';
 import { CustomError } from '@exceptions/CustomError';
 import { MailSendingService } from '@services/mailSending.service';
+import { CustomerService } from '@services/customers.service';
+import { sendVerification } from '@services/sms.service';
 
-const createToken = (customer: Customer): TokenData => {
+export const createToken = (customer: Customer): TokenData => {
   const dataStoredInToken: DataStoredInToken = { id: customer.id };
   const expiresIn = '1h';
 
@@ -25,14 +27,17 @@ const createTokenMerchant = (merchant: Merchant): TokenData => {
 
   return { expiresIn, token: sign(dataStoredInToken, SECRET_KEY, { expiresIn }) };
 };
+
 @Service()
 export class AuthService {
   private redis: RedisClient;
+
   constructor() {
     this.redis = new RedisClient();
   }
-  public async signup(customerData: Customer, trust: boolean, uid?: string): Promise<{ customer: Customer; token: string }> {
-    const { name, phone, password } = customerData;
+
+  public async signup(customerData: Customer, info: string, trust: boolean, deviceId, uid?: string): Promise<{ customer: Customer; token: string }> {
+    const { name, phone, password, otp } = customerData;
     const { rows: findCustomer } = await pg.query(
       `
         SELECT EXISTS(
@@ -43,7 +48,18 @@ export class AuthService {
       [phone],
     );
     if (findCustomer[0].exists) throw new CustomError('NUMBER_TAKEN');
-
+    const details = await this.redis.hGet('customer_otp', JSON.stringify({ phone: phone, deviceId }));
+    const detailsObject = JSON.parse(details || '{}');
+    const expired = moment().isAfter(moment(detailsObject.expiresAt));
+    const tooManyTries = detailsObject.numAttempt >= 3;
+    const sameCode = detailsObject.code === parseInt(otp);
+    if (expired) throw new CustomError('EXPIRED_OTP');
+    if (tooManyTries) throw new CustomError('TOO_MANY_TRIES');
+    if (!sameCode) {
+      detailsObject.numAttempt++;
+      await this.redis.hSet('customer_otp', JSON.stringify({ phone: phone, deviceId }), JSON.stringify(detailsObject));
+      throw new CustomError('WRONG_OTP');
+    }
     const hashedPassword = await hash(password, 10);
     const { rows: signUpCustomerData } = await pg.query(
       `
@@ -56,11 +72,10 @@ export class AuthService {
       [name, phone, hashedPassword],
     );
     if (uid && trust) {
-      console.log(uid);
       await pg.query(
-        `INSERT INTO customer_device(customer_id, device_id)
-         values ($1, $2)`,
-        [signUpCustomerData[0].id, uid],
+        `INSERT INTO customer_device(customer_id, device_id, name)
+         values ($1, $2, $3)`,
+        [signUpCustomerData[0].id, uid, info],
       );
     }
     const tokenData = createToken(signUpCustomerData[0]);
@@ -68,10 +83,13 @@ export class AuthService {
     return { customer: signUpCustomerData[0], token };
   }
 
-  public async login(CustomerData: CustomerLogin, deviceId: any): Promise<{ tokenData: TokenData; findCustomer: any }> {
+  public async login(CustomerData: CustomerLogin, deviceId: any, deviceInfo: string): Promise<{ tokenData: TokenData; findCustomer: any }> {
     let customerStatus: { is_blocked?: boolean; last_login_attempt?: moment.Moment | null; safe_login_after?: number | null } = {};
-
     const { phone, password, trust, otp } = CustomerData;
+    const getOptObject = JSON.stringify({
+      phone,
+      deviceId,
+    });
     const newTrust = trust || false;
 
     const { rows, rowCount } = await pg.query(
@@ -107,7 +125,13 @@ export class AuthService {
       }
     }
 
-    const deviceResult = await pg.query(`Select * from customer_device where device_id= $1 and customer_id = $2`, [deviceId, rows[0].id]);
+    const deviceResult = await pg.query(
+      `Select *
+ from customer_device
+ where device_id = $1
+   and customer_id = $2`,
+      [deviceId, rows[0].id],
+    );
 
     const loginType = deviceResult.rows.length > 0 ? 'otp' : 'password';
 
@@ -129,7 +153,6 @@ export class AuthService {
         customerStatus.last_login_attempt = moment();
         const status_object = JSON.stringify({ phone, deviceId });
         await this.redis.hSet('customer_status', status_object, JSON.stringify(customerStatus));
-
         if (customerStatus.is_blocked) {
           throw new CustomError('USER_BLOCKED');
         } else {
@@ -137,59 +160,73 @@ export class AuthService {
         }
       }
     } else {
-      const redisOtp = await this.redis.hGet('otp', phone);
-
-      if (!redisOtp) {
-        return;
-      }
-
+      const redisOtp = await this.redis.hGet('otp', getOptObject);
       const otpObject = JSON.parse(redisOtp);
-
+      if (!redisOtp) {
+        throw new CustomError('WRONG_OTP');
+      }
+      if (otpObject.tries >= 3) {
+        throw new CustomError('TOO_MANY_TRIES');
+      }
+      if (otpObject.code !== parseInt(otp)) {
+        otpObject.tries += 1;
+        await this.redis.hSet('otp', getOptObject, JSON.stringify(otpObject));
+        throw new CustomError('WRONG_OTP');
+      }
       if (moment().isAfter(otpObject.expiresAt)) {
-        await this.redis.hDel('otp', phone);
+        await this.redis.hDel('otp', getOptObject);
         throw new CustomError('EXPIRED_OTP');
       }
-
-      if (otpObject.code === parseInt(otp) && moment().isBefore(otpObject.expiresAt)) {
-        await this.redis.hDel('otp', phone);
+      if (otpObject.code === parseInt(otp) && moment().isBefore(otpObject.expiresAt) && otpObject.tries < 3) {
+        await this.redis.hDel('otp', getOptObject);
       } else {
         return;
       }
     }
 
     if (newTrust) {
-      await pg.query(`Insert into customer_device(customer_id, device_id) values ($1,$2)`, [rows[0].id, deviceId]);
+      await pg.query(
+        `Insert into customer_device(customer_id, device_id, name)
+                      values ($1, $2, $3)`,
+        [rows[0].id, deviceId, deviceInfo],
+      );
     }
 
     const tokenData: TokenData = createToken(rows[0]);
     return { tokenData, findCustomer: rows[0] };
   }
 
-  public async getLoginType(phone: string, deviceId?: string) {
+  public async getLoginType(phone: string, deviceId: string) {
     const { rows } = await pg.query(
       `Select *
-                                     from customer
-                                     where phone = $1`,
+       from customer
+       where phone = $1`,
       [phone],
     );
     if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
-    if (!deviceId) {
-      return { password: true, otp: false };
-    }
-
-    const { rows: customerPhone } = await pg.query(
-      `Select *
-                                                    from customer_device
-                                                    where customer_id = $1`,
-      [rows[0].id],
-    );
-    if (!customerPhone[0]) return { password: true, otp: false };
     const otpObject = {
       code: Math.floor(100000 + Math.random() * 900000),
       expiresAt: moment().add(2, 'minutes').valueOf(),
+      tries: 0,
     };
-    await this.redis.hSet('otp', rows[0].phone, JSON.stringify(otpObject));
-    return { password: false, otp: true };
+    const { rows: customerPhone } = await pg.query(
+      `Select *
+       from customer_device
+       where customer_id = $1 and device_id = $2`,
+      [rows[0].id, deviceId],
+    );
+    if (!customerPhone[0]) return { password: true, otp: false };
+    const redisObject = {
+      phone,
+      deviceId,
+    };
+    const redisOtp = JSON.parse(await this.redis.hGet('otp', JSON.stringify(redisObject)));
+    if (!redisOtp || moment().isAfter(redisOtp.expiresAt)) {
+      await this.redis.hSet('otp', JSON.stringify(redisObject), JSON.stringify(otpObject));
+      await sendVerification(rows[0].phone, otpObject.code);
+      return { password: false, otp: true, timeLeft: moment(otpObject.expiresAt).diff(moment(), 'seconds') };
+    }
+    return { password: false, otp: true, timeLeft: moment(redisOtp.expiresAt).diff(moment(), 'seconds') };
   }
 
   public async logout(customerData: Customer): Promise<Customer> {
@@ -236,12 +273,12 @@ export class AuthService {
       const hashedPassword = await hash(password, 10);
       const { rows: signMerchantData } = await pg.query(
         `
-        INSERT INTO merchant("name",
-                             "email",
-                             "hashed_password")
-        VALUES ($1, $2, $3)
-        RETURNING "id",email,hashed_password
-      `,
+          INSERT INTO merchant("name",
+                               "email",
+                               "hashed_password")
+          VALUES ($1, $2, $3)
+          RETURNING "id",email,hashed_password
+        `,
         [name, email, hashedPassword],
       );
       await this.redis.hDel('verification_code', email);
@@ -252,6 +289,7 @@ export class AuthService {
     await this.redis.hSet('verification_code', email, JSON.stringify(codeObject));
     throw new CustomError('WRONG_OTP');
   }
+
   public async sendCode(email, resend): Promise<any> {
     const redisCode = await this.redis.hGet('verification_code', email);
     const codeObject = JSON.parse(redisCode);
@@ -275,6 +313,7 @@ export class AuthService {
       throw new CustomError('CODE_ALREADY_SEND', null, { timeLeft });
     }
   }
+
   public async loginMerchant(email, password, deviceId): Promise<{ tokenData: TokenData; merchant: any }> {
     let merchantStatus: { is_blocked: boolean; last_login_attempt: moment.Moment; safe_login_after: number } = {
       is_blocked: false,

@@ -2,17 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomersController = void 0;
 const typedi_1 = require("typedi");
-const customers_service_1 = require("../services/customers.service");
-const _config_1 = require("../config");
+const customers_service_1 = require("@services/customers.service");
+const _config_1 = require("@config");
 const jsonwebtoken_1 = require("jsonwebtoken");
-const imageStorage_1 = require("../utils/imageStorage");
+const imageStorage_1 = require("@utils/imageStorage");
 class CustomersController {
     constructor() {
         this.customer = typedi_1.Container.get(customers_service_1.CustomerService);
-        this.getCustomers = async (req, res, next) => {
+        this.loginWithQr = async (req, res, next) => {
             try {
-                const findAllCustomersData = await this.customer.findAllCustomer();
-                res.status(200).json({ data: findAllCustomersData, message: 'findAll' });
+                const qrLogin = req.body;
+                const customerId = this.getCustomerId(req);
+                await this.customer.loginWithQr(qrLogin, customerId);
+                res.status(200).json({
+                    success: true,
+                });
             }
             catch (error) {
                 next(error);
@@ -104,6 +108,49 @@ class CustomersController {
                 const otp = await this.customer.getOtp(phone);
                 res.status(200).json({
                     otp: otp,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.getDevices = async (req, res, next) => {
+            try {
+                const customerId = this.getCustomerId(req);
+                const rows = await this.customer.getDevices(customerId);
+                res.status(200).json({
+                    success: true,
+                    rows,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.deleteCustomerDevice = async (req, res, next) => {
+            try {
+                const deviceId = req.headers['x-device-id'];
+                const customerId = this.getCustomerId(req);
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+                console.log(deviceId);
+                const message = await this.customer.deleteCustomerDevice(deviceId, customerId, lang);
+                res.status(200).json({
+                    success: true,
+                    message,
+                });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.sendCodeToPhone = async (req, res, next) => {
+            try {
+                const deviceId = req.headers['x-device-id'];
+                const verify = req.body;
+                await this.customer.sendCodeToPhone(verify, deviceId, true);
+                res.status(200).json({
+                    success: true,
+                    timeLeft: 120,
                 });
             }
             catch (error) {

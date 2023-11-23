@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionController = void 0;
 const jsonwebtoken_1 = require("jsonwebtoken");
-const _config_1 = require("../config");
+const _config_1 = require("@config");
 const typedi_1 = require("typedi");
-const transaction_service_1 = require("../services/transaction.service");
+const transaction_service_1 = require("@services/transaction.service");
 class TransactionController {
     constructor() {
         this.transaction = typedi_1.Container.get(transaction_service_1.TransactionService);
