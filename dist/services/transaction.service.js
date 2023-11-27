@@ -9,7 +9,7 @@ Object.defineProperty(exports, "TransactionService", {
     }
 });
 const _typedi = require("typedi");
-const _database = /*#__PURE__*/ _interop_require_default(require("database"));
+const _database = /*#__PURE__*/ _interop_require_default(require("../database"));
 const _CustomError = require("../exceptions/CustomError");
 const _imageStorage = require("../utils/imageStorage");
 const _moment = /*#__PURE__*/ _interop_require_default(require("moment"));
