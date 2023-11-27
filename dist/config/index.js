@@ -59,6 +59,15 @@ _export(exports, {
     },
     SMS_SERVICE_SECRET: function() {
         return SMS_SERVICE_SECRET;
+    },
+    CARD_SERVICE_URL: function() {
+        return CARD_SERVICE_URL;
+    },
+    CARD_SERVICE_USERNAME: function() {
+        return CARD_SERVICE_USERNAME;
+    },
+    CARD_SERVICE_PASSWORD: function() {
+        return CARD_SERVICE_PASSWORD;
     }
 });
 const _dotenv = require("dotenv");
@@ -109,6 +118,7 @@ const CREDENTIALS = _process.env.CREDENTIALS === 'true';
 const { NODE_ENV, PORT, SECRET_KEY, LOG_FORMAT, LOG_DIR, ORIGIN } = _process.env;
 const { POSTGRES_USER, POSTGRES_URL, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_SSL } = _process.env;
 const { REDIS_TLS } = _process.env;
-const { CRM_API_URL, SMS_SERVICE_SECRET } = _process.env;
+const { CRM_API_URL, SMS_SERVICE_SECRET, CARD_SERVICE_URL } = _process.env;
+const { CARD_SERVICE_USERNAME, CARD_SERVICE_PASSWORD } = _process.env;
 
 //# sourceMappingURL=index.js.map

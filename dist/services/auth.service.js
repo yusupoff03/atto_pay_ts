@@ -26,7 +26,6 @@ const _redis = require("../database/redis");
 const _moment = /*#__PURE__*/ _interop_require_default(require("moment"));
 const _CustomError = require("../exceptions/CustomError");
 const _mailSendingservice = require("./mailSending.service");
-const _smsservice = require("./sms.service");
 function _define_property(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -308,7 +307,7 @@ let AuthService = class AuthService {
         const redisOtp = JSON.parse(await this.redis.hGet('otp', JSON.stringify(redisObject)));
         if (!redisOtp || (0, _moment.default)().isAfter(redisOtp.expiresAt)) {
             await this.redis.hSet('otp', JSON.stringify(redisObject), JSON.stringify(otpObject));
-            await (0, _smsservice.sendVerification)(rows[0].phone, otpObject.code);
+            // await sendVerification(rows[0].phone, otpObject.code);
             return {
                 password: false,
                 otp: true,

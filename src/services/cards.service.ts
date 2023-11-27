@@ -1,8 +1,9 @@
 import { Service } from 'typedi';
 import pg from '@database';
-import { CreateCardDto, CardUpdateDto } from '@dtos/card.dto';
+import { CreateCardDto, CardUpdateDto, CardForOtp } from '@dtos/card.dto';
 import { CustomError } from '@exceptions/CustomError';
 import { request } from '@/test';
+import { CardRequestService } from '@services/cardrequest.service';
 
 @Service()
 export class CardsService {
@@ -12,6 +13,9 @@ export class CardsService {
     const owner_name = cardDto.owner_name;
     const expiry_month: string = cardDto.expiry_month;
     const expiry_year: string = cardDto.expiry_year;
+    const response = await CardRequestService.CardVerify(cardDto.id, cardDto.code);
+    console.log(response);
+    if (response.data.error) throw new CustomError('WRONG_OTP');
     const { rows } = await pg.query(
       `Select *
 from customer_card
@@ -28,7 +32,15 @@ where pan = $1`,
     );
     return cardRows[0].message[lang];
   }
-
+  public async newOtp(cardForOtp: CardForOtp, lang): Promise<string> {
+    const { rows } = await pg.query('Select * from customer_card where pan=$1', [cardForOtp.pan]);
+    if (rows[0]) throw new CustomError('CARD_BELONGS_TO_ANOTHER');
+    const expiry = `${cardForOtp.expiry_year}${cardForOtp.expiry_month}`;
+    const response = await CardRequestService.cardNewOtp(cardForOtp.pan, expiry);
+    console.log(response);
+    if (response.data.error) throw new CustomError('CARD_NOT_FOUND');
+    return response.data.result.id;
+  }
   public async getCustomerCards(customerId: string) {
     const { rows } = await pg.query(`Select *, mask_credit_card(pan) as pan from customer_card where customer_id = $1`, [customerId]);
     if (!rows[0]) {

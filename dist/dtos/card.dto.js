@@ -17,6 +17,9 @@ _export(exports, {
     },
     CardOwner: function() {
         return CardOwner;
+    },
+    CardForOtp: function() {
+        return CardForOtp;
     }
 });
 const _classvalidator = require("class-validator");
@@ -49,6 +52,8 @@ let CreateCardDto = class CreateCardDto {
         _define_property(this, "expiry_month", void 0);
         _define_property(this, "expiry_year", void 0);
         _define_property(this, "owner_name", void 0);
+        _define_property(this, "id", void 0);
+        _define_property(this, "code", void 0);
     }
 };
 _ts_decorate([
@@ -72,6 +77,16 @@ _ts_decorate([
     (0, _classvalidator.IsString)(),
     _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "expiry_year", void 0);
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
+], CreateCardDto.prototype, "id", void 0);
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
+], CreateCardDto.prototype, "code", void 0);
 let CardUpdateDto = class CardUpdateDto {
     constructor(){
         _define_property(this, "id", void 0);
@@ -93,5 +108,29 @@ _ts_decorate([
     (0, _classvalidator.Matches)(/\b(?:\d[ -]*?){16}\b/),
     _ts_metadata("design:type", String)
 ], CardOwner.prototype, "pan", void 0);
+let CardForOtp = class CardForOtp {
+    constructor(){
+        _define_property(this, "pan", void 0);
+        _define_property(this, "expiry_month", void 0);
+        _define_property(this, "expiry_year", void 0);
+    }
+};
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.MinLength)(16),
+    (0, _classvalidator.MaxLength)(16),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
+], CardForOtp.prototype, "pan", void 0);
+_ts_decorate([
+    (0, _classvalidator.IsString)(),
+    (0, _classvalidator.IsNotEmpty)(),
+    _ts_metadata("design:type", String)
+], CardForOtp.prototype, "expiry_month", void 0);
+_ts_decorate([
+    (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.IsString)(),
+    _ts_metadata("design:type", String)
+], CardForOtp.prototype, "expiry_year", void 0);
 
 //# sourceMappingURL=card.dto.js.map

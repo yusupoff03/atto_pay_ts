@@ -42,6 +42,19 @@ let CardsController = class CardsController {
                 next(error);
             }
         });
+        _define_property(this, "newOtp", async (req, res, next)=>{
+            try {
+                const cardForOtp = req.body;
+                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+                const message = await this.card.newOtp(cardForOtp, lang);
+                res.status(200).json({
+                    success: true,
+                    message
+                });
+            } catch (error) {
+                next(error);
+            }
+        });
         _define_property(this, "getCustomerCards", async (req, res, next)=>{
             try {
                 const customer_id = this.getCustomerId(req);

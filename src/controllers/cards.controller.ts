@@ -3,7 +3,7 @@ import { Container } from 'typedi';
 import { CardsService } from '@services/cards.service';
 import { DataStoredInToken } from '@interfaces/auth.interface';
 import { verify } from 'jsonwebtoken';
-import { CreateCardDto, CardUpdateDto } from '@dtos/card.dto';
+import { CreateCardDto, CardUpdateDto, CardForOtp } from '@dtos/card.dto';
 import { Customer } from '@interfaces/customers.interface';
 import { SECRET_KEY } from '@config';
 import { Card } from '@interfaces/cards.interface';
@@ -17,6 +17,19 @@ export class CardsController {
       const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
       const message = await this.card.createCard(cardDto, customerId, lang);
       res.status(201).json({
+        success: true,
+        message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  public newOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const cardForOtp: CardForOtp = req.body;
+      const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
+      const message = await this.card.newOtp(cardForOtp, lang);
+      res.status(200).json({
         success: true,
         message,
       });

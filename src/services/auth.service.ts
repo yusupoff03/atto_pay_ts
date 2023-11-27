@@ -223,7 +223,7 @@ export class AuthService {
     const redisOtp = JSON.parse(await this.redis.hGet('otp', JSON.stringify(redisObject)));
     if (!redisOtp || moment().isAfter(redisOtp.expiresAt)) {
       await this.redis.hSet('otp', JSON.stringify(redisObject), JSON.stringify(otpObject));
-      await sendVerification(rows[0].phone, otpObject.code);
+      // await sendVerification(rows[0].phone, otpObject.code);
       return { password: false, otp: true, timeLeft: moment(otpObject.expiresAt).diff(moment(), 'seconds') };
     }
     return { password: false, otp: true, timeLeft: moment(redisOtp.expiresAt).diff(moment(), 'seconds') };

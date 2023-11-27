@@ -12,6 +12,7 @@ const _typedi = require("typedi");
 const _database = /*#__PURE__*/ _interop_require_default(require("../database"));
 const _CustomError = require("../exceptions/CustomError");
 const _test = require("../test");
+const _cardrequestservice = require("./cardrequest.service");
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
@@ -30,6 +31,9 @@ let CardsService = class CardsService {
         const owner_name = cardDto.owner_name;
         const expiry_month = cardDto.expiry_month;
         const expiry_year = cardDto.expiry_year;
+        const response = await _cardrequestservice.CardRequestService.CardVerify(cardDto.id, cardDto.code);
+        console.log(response);
+        if (response.data.error) throw new _CustomError.CustomError('WRONG_OTP');
         const { rows } = await _database.default.query(`Select *
 from customer_card
 where pan = $1`, [
@@ -48,6 +52,17 @@ where pan = $1`, [
             expiry_year
         ]);
         return cardRows[0].message[lang];
+    }
+    async newOtp(cardForOtp, lang) {
+        const { rows } = await _database.default.query('Select * from customer_card where pan=$1', [
+            cardForOtp.pan
+        ]);
+        if (rows[0]) throw new _CustomError.CustomError('CARD_BELONGS_TO_ANOTHER');
+        const expiry = `${cardForOtp.expiry_year}${cardForOtp.expiry_month}`;
+        const response = await _cardrequestservice.CardRequestService.cardNewOtp(cardForOtp.pan, expiry);
+        console.log(response);
+        if (response.data.error) throw new _CustomError.CustomError('CARD_NOT_FOUND');
+        return response.data.result.id;
     }
     async getCustomerCards(customerId) {
         const { rows } = await _database.default.query(`Select *, mask_credit_card(pan) as pan from customer_card where customer_id = $1`, [
