@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS customer_device cascade;
 DROP TABLE IF EXISTS merchant cascade;
 DROP TABLE IF EXISTS service cascade;
 DROP TABLE IF EXISTS message cascade;
-
+DROP TABLE if exists customer_card cascade;
 
 create table if not exists customer(
 id uuid primary key default uuid_generate_v4(),
@@ -31,11 +31,11 @@ create table if not exists customer_card(
 id uuid primary key default uuid_generate_v4(),
 customer_id uuid not null references customer(id),
 name varchar(64) not null,
-owner_name varchar(64),
+verified_id varchar,
 pan varchar(16) not null unique,
 expiry_month varchar(2) not null,
 expiry_year varchar(2) not null,
-balance numeric(10, 2) not null default 1000000,
+balance numeric(10, 2) not null,
 constraint unique_customer_pan unique(customer_id, pan)
 );
 create table if not exists currency(
@@ -74,6 +74,7 @@ service_id uuid not null references service(id),
 name varchar(64) not null,
 type varchar(16) not null,
 order_num int default 0,
+deleted boolean not null default false,
 constraint unique_service_field unique(service_id, name)
 );
 create table if not exists message(
@@ -86,6 +87,7 @@ customer_id uuid not null references customer(id),
 service_id uuid not null references service(id),
 constraint unique_customer_service unique(customer_id, service_id)
 );
+
 create table if not exists transfer (
 id uuid primary key default uuid_generate_v4(),
 owner_id uuid not null,
@@ -95,7 +97,8 @@ created_at timestamp not null default now(),
 sender_pan varchar(16),
 sender_id uuid,
 receiver_pan varchar(16),
-receiver_id uuid
+receiver_id uuid,
+ref_id varchar(64)
 );
 create table if not exists payment (
 id uuid primary key default uuid_generate_v4(),
@@ -105,13 +108,17 @@ amount int not null,
 created_at timestamp not null default now(),
 sender_id uuid not null,
 receiver_id uuid not null,
+ref_id varchar(64),
 fields jsonb
 );
-create or replace function mask_credit_card(pan varchar(16))
-returns varchar(16) as $$
-  begin return concat(left(pan,6),'******',right(pan,4));
-    end;
-  $$ language plpgsql;
+create table if not exists customer_transport_card(
+  id uuid primary key default uuid_generate_v4(),
+  customer_id uuid not null references customer(id),
+  pan varchar(16) not null unique,
+  expiry_month varchar(2) not null,
+  expiry_year varchar(2) not null,
+  constraint unique_customer_card_pan unique(customer_id, pan)
+);
 -- creates new service with fields
 create or replace procedure create_service(
   _merchant_id uuid,
@@ -164,7 +171,7 @@ create or replace procedure delete_card(
 ) as $$
 begin
   begin
-    delete from transactions where owner_id = _customer_id and (sender->>'id')::uuid = _card_id or (receiver->>'id')::uuid = _card_id;
+    delete from transfer where owner_id = _customer_id and (sender_id->>'id')::uuid = _card_id or (receiver_id->>'id')::uuid = _card_id;
 
     delete from customer_card where id = _card_id and customer_id = _customer_id;
     if not found then
@@ -187,6 +194,7 @@ create or replace procedure pay_for_service(
   _card_id uuid,
   _service_id uuid,
   _amount int,
+  _refId varchar(64),
   _details jsonb,
   out payment_id uuid,
   out error_code varchar(64),
@@ -220,13 +228,8 @@ begin
       return;
     end if;
 
-    if card_row.balance < _amount then
-      error_code := 'INSUFFICIENT_FUNDS';
-      return;
-    end if;
-
     -- save service_field names
-    select jsonb_agg(jsonb_build_object('id', id, 'name', name)) into service_fields from service_field where service_id = _service_id;
+    select jsonb_agg(jsonb_build_object('id', id, 'name', name)) into service_fields from service_field where service_id = _service_id and deleted = false;
 
     -- loop service_fields and check if all required fields are provided, then add them to details
     if jsonb_array_length(service_fields) > 0 then
@@ -247,14 +250,13 @@ begin
         end loop;
     end if;
 
-    insert into payment (owner_id, type, amount, sender_id, receiver_id, fields)
-    values (_customer_id, 'expense', _amount, card_row.id, _service_id, details)
+    insert into payment (owner_id, type, amount, sender_id, receiver_id, fields, ref_id)
+    values (_customer_id, 'expense', _amount, card_row.id, _service_id, details, _refId)
     returning id into payment_id;
 
     insert into payment (owner_id, type, amount, sender_id, receiver_id, fields)
     values (service_row.merchant_id, 'income', _amount, _customer_id, _service_id, details);
 
-    update customer_card set balance = balance - _amount where id = _card_id;
     update merchant set balance = balance + _amount where id = service_row.merchant_id;
 
     select message from message where name = 'PAYMENT_SUCCESS' into success_message;

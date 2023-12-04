@@ -11,7 +11,11 @@ Object.defineProperty(exports, "default", {
 const _socketio = require("socket.io");
 const _errormiddleware = require("../middlewares/error.middleware");
 const _qrLogin = require("./qrLogin");
-const io = new _socketio.Server();
+const io = new _socketio.Server({
+    cors: {
+        origin: '*'
+    }
+});
 io.on('connection', (socket)=>{
     socket.on('qr_login_request', (0, _errormiddleware.errorHandler)(socket, _qrLogin.qrLoginRequest));
 });

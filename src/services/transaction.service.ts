@@ -9,7 +9,6 @@ import { POSTGRES_SSL, POSTGRES_URL } from '@config';
 @Service()
 export class TransactionService {
   function;
-
   public async payForService(customerId, serviceId, cardId, amount, fields) {
     const pool = new Pool({
       connectionString: POSTGRES_URL,
@@ -75,7 +74,6 @@ export class TransactionService {
       client.release();
     }
   }
-
   public async transferMoneyToSelf(customerId, fromCardId, toCardId, amount): Promise<any> {
     const { rows } = await pg.query(`call transfer_money_to_self($1,$2,$3,$4,null,null,null,null)`, [customerId, fromCardId, toCardId, amount]);
     const { error_code, error_message, transfer_id, success_message } = rows[0];
@@ -84,7 +82,6 @@ export class TransactionService {
     }
     return { success_message, transfer_id };
   }
-
   public async getTransactions(
     customerId: string,
     offset: any,
@@ -112,7 +109,6 @@ export class TransactionService {
     });
     return transactions;
   }
-
   public async transferMoney(customerId, fromCardId, toCardPan, amount, lang): Promise<any> {
     const { rows } = await pg.query(`call transfer_money($1,$2,$3,$4,null,null,null,null)`, [customerId, fromCardId, toCardPan, amount]);
     const { error_code, error_message, transfer_id, success_message } = rows[0];

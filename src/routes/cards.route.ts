@@ -4,6 +4,7 @@ import { CardsController } from '@controllers/cards.controller';
 import { ValidationMiddleware } from '@middlewares/validation.middleware';
 import { CardForOtp, CardOwner, CreateCardDto } from '@dtos/card.dto';
 import { AuthMiddleware } from '@middlewares/auth.middleware';
+import { CreateTransportCardDto } from '@dtos/transport.card.dto';
 export class CardsRoute implements Routes {
   path = '/customer/card';
   router = Router();
@@ -15,7 +16,6 @@ export class CardsRoute implements Routes {
     this.router.post(`${this.path}`, ValidationMiddleware(CreateCardDto), this.cards.createCard);
     this.router.post(`${this.path}/otp`, ValidationMiddleware(CardForOtp), this.cards.newOtp);
     this.router.post(`${this.path}/owner`, AuthMiddleware, ValidationMiddleware(CardOwner), this.cards.getOwnerByPan);
-    this.router.post(`${this.path}/transport/add`, AuthMiddleware, ValidationMiddleware(CreateCardDto), this.cards.addTransportCard);
     this.router.get(`${this.path}`, this.cards.getCustomerCards);
     this.router.get(`${this.path}/:id`, this.cards.getOneById);
     this.router.delete(`${this.path}`, this.cards.deleteCard);

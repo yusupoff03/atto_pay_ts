@@ -5,7 +5,6 @@ import { Category } from '@interfaces/category.interface';
 
 export class CategoryController {
   public category = Container.get(CategoryService);
-
   public getAllCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';

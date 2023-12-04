@@ -6,7 +6,7 @@ import { HttpException } from '@exceptions/httpException';
 import { Socket } from 'socket.io';
 
 export const ErrorMiddleware = async (error: HttpException | CustomError, req?: Request, res?: Response, next?: NextFunction) => {
-  console.log(error);
+  // console.log(error);
   try {
     const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
     const result = await defaultErrorHandler(error, lang);

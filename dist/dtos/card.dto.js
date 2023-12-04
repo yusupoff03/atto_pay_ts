@@ -52,7 +52,6 @@ let CreateCardDto = class CreateCardDto {
         _define_property(this, "expiry_month", void 0);
         _define_property(this, "expiry_year", void 0);
         _define_property(this, "owner_name", void 0);
-        _define_property(this, "id", void 0);
         _define_property(this, "code", void 0);
     }
 };
@@ -65,6 +64,7 @@ _ts_decorate([
     (0, _classvalidator.MinLength)(16),
     (0, _classvalidator.MaxLength)(16),
     (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.Matches)(/^(8600|5614|9987)\d{12}$/),
     _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "pan", void 0);
 _ts_decorate([
@@ -77,11 +77,6 @@ _ts_decorate([
     (0, _classvalidator.IsString)(),
     _ts_metadata("design:type", String)
 ], CreateCardDto.prototype, "expiry_year", void 0);
-_ts_decorate([
-    (0, _classvalidator.IsString)(),
-    (0, _classvalidator.IsNotEmpty)(),
-    _ts_metadata("design:type", String)
-], CreateCardDto.prototype, "id", void 0);
 _ts_decorate([
     (0, _classvalidator.IsString)(),
     (0, _classvalidator.IsNotEmpty)(),
@@ -105,7 +100,7 @@ let CardOwner = class CardOwner {
 _ts_decorate([
     (0, _classvalidator.IsString)(),
     (0, _classvalidator.IsNotEmpty)(),
-    (0, _classvalidator.Matches)(/\b(?:\d[ -]*?){16}\b/),
+    (0, _classvalidator.Matches)(/^(8600|5614|9987)\d{12}$/),
     _ts_metadata("design:type", String)
 ], CardOwner.prototype, "pan", void 0);
 let CardForOtp = class CardForOtp {
@@ -120,6 +115,7 @@ _ts_decorate([
     (0, _classvalidator.MinLength)(16),
     (0, _classvalidator.MaxLength)(16),
     (0, _classvalidator.IsNotEmpty)(),
+    (0, _classvalidator.Matches)(/^(8600|5614)\d{12}$/),
     _ts_metadata("design:type", String)
 ], CardForOtp.prototype, "pan", void 0);
 _ts_decorate([

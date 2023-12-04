@@ -15,14 +15,17 @@ async function sendSMS(phone, msg) {
       msg,
     },
   };
-  return await axios(options);
+  const axiosResponse = await axios(options);
+  if (axiosResponse.data.error) {
+    throw new CustomError(axiosResponse.data.error.name);
+  }
+  return axiosResponse;
 }
 
 export async function sendVerification(phone, code) {
   try {
     const msg = `AttoPay: this is your verification code: ${code}`;
-    const response = await sendSMS(phone, msg);
-    return response;
+    return await sendSMS(phone, msg);
   } catch (error) {
     throw new CustomError(error.message);
   }

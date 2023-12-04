@@ -76,7 +76,6 @@ export class CustomersController {
       next(error);
     }
   };
-
   public deleteCustomer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const cookie = req.cookies['Authorization'];

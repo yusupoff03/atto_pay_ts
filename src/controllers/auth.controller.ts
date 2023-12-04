@@ -8,7 +8,6 @@ import { CustomerService } from '@services/customers.service';
 
 export class AuthController {
   public auth = Container.get(AuthService);
-
   public signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerData: Customer = req.body;
@@ -21,7 +20,6 @@ export class AuthController {
       next(error);
     }
   };
-
   public logIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerData: CustomerLogin = req.body;
@@ -47,7 +45,6 @@ export class AuthController {
       next(error);
     }
   };
-
   public logOut = async (req: RequestWithCustomer, res: Response, next: NextFunction): Promise<void> => {
     try {
       const customerData: Customer = req.customer;

@@ -76,7 +76,7 @@ function _object_spread_props(target, source) {
     return target;
 }
 const ErrorMiddleware = async (error, req, res, next)=>{
-    console.log(error);
+    // console.log(error);
     try {
         const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
         const result = await defaultErrorHandler(error, lang);

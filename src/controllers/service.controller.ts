@@ -9,7 +9,6 @@ import { ServiceInterface, ServiceUpdate } from '@interfaces/service.interface';
 
 export class ServiceController {
   public service = Container.get(ServiceService);
-
   public getMerchantServices = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const merchantId = await this.getMerchantId(req);

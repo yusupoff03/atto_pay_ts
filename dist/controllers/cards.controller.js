@@ -32,8 +32,14 @@ let CardsController = class CardsController {
             try {
                 const customerId = this.getCustomerId(req);
                 const cardDto = req.body;
+                let message = '';
+                const deviceId = req.headers['x-device-id'];
                 const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
-                const message = await this.card.createCard(cardDto, customerId, lang);
+                if (cardDto.pan.startsWith('9987')) {
+                    message = await this.card.addTransportCard(cardDto, customerId, lang);
+                } else {
+                    message = await this.card.createCard(cardDto, customerId, lang, JSON.stringify(deviceId));
+                }
                 res.status(201).json({
                     success: true,
                     message
@@ -44,9 +50,10 @@ let CardsController = class CardsController {
         });
         _define_property(this, "newOtp", async (req, res, next)=>{
             try {
+                const customerId = this.getCustomerId(req);
                 const cardForOtp = req.body;
-                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
-                const message = await this.card.newOtp(cardForOtp, lang);
+                const deviceId = req.headers['x-device-id'];
+                const message = await this.card.newOtp(cardForOtp, customerId, JSON.stringify(deviceId));
                 res.status(200).json({
                     success: true,
                     message
@@ -111,20 +118,6 @@ let CardsController = class CardsController {
                 const owner = await this.card.getOwnerByPan(pan);
                 res.status(200).json({
                     owner
-                });
-            } catch (error) {
-                next(error);
-            }
-        });
-        _define_property(this, "addTransportCard", async (req, res, next)=>{
-            try {
-                const customerId = this.getCustomerId(req);
-                const card = req.body;
-                const lang = req.acceptsLanguages('en', 'ru', 'uz') || 'en';
-                const message = await this.card.addTransportCard(card, customerId, lang);
-                res.status(201).json({
-                    success: true,
-                    message
                 });
             } catch (error) {
                 next(error);

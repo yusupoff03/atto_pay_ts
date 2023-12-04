@@ -12,7 +12,6 @@ import moment from 'moment';
 import bcrypt from 'bcrypt';
 import { CustomError } from '@exceptions/CustomError';
 import { MailSendingService } from '@services/mailSending.service';
-import { CustomerService } from '@services/customers.service';
 import { sendVerification } from '@services/sms.service';
 
 export const createToken = (customer: Customer): TokenData => {
@@ -171,6 +170,7 @@ export class AuthService {
       if (otpObject.code !== parseInt(otp)) {
         otpObject.tries += 1;
         await this.redis.hSet('otp', getOptObject, JSON.stringify(otpObject));
+        await sendVerification(phone, otpObject.code);
         throw new CustomError('WRONG_OTP');
       }
       if (moment().isAfter(otpObject.expiresAt)) {
@@ -222,8 +222,11 @@ export class AuthService {
     };
     const redisOtp = JSON.parse(await this.redis.hGet('otp', JSON.stringify(redisObject)));
     if (!redisOtp || moment().isAfter(redisOtp.expiresAt)) {
+      if (redisOtp && moment().isAfter(redisOtp.expiresAt)) {
+        await this.redis.hDel('otp', JSON.stringify(redisObject));
+      }
       await this.redis.hSet('otp', JSON.stringify(redisObject), JSON.stringify(otpObject));
-      // await sendVerification(rows[0].phone, otpObject.code);
+      await sendVerification(rows[0].phone, otpObject.code);
       return { password: false, otp: true, timeLeft: moment(otpObject.expiresAt).diff(moment(), 'seconds') };
     }
     return { password: false, otp: true, timeLeft: moment(redisOtp.expiresAt).diff(moment(), 'seconds') };

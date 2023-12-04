@@ -2,8 +2,11 @@ import { Server } from 'socket.io';
 import { errorHandler } from '@middlewares/error.middleware';
 import { qrLoginRequest } from './qrLogin';
 
-const io = new Server();
-
+const io = new Server({
+  cors: {
+    origin: '*',
+  },
+});
 io.on('connection', socket => {
   socket.on('qr_login_request', errorHandler(socket, qrLoginRequest));
 });

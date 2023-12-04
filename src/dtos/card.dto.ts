@@ -7,6 +7,7 @@ export class CreateCardDto {
   @MinLength(16)
   @MaxLength(16)
   @IsNotEmpty()
+  @Matches(/^(8600|5614|9987)\d{12}$/)
   public pan: string;
   @IsString()
   @IsNotEmpty()
@@ -17,10 +18,7 @@ export class CreateCardDto {
   public owner_name: string;
   @IsString()
   @IsNotEmpty()
-  public id: string;
-  @IsString()
-  @IsNotEmpty()
-  public code: string;
+  public code?: string;
 }
 export class CardUpdateDto {
   id: string;
@@ -30,7 +28,7 @@ export class CardUpdateDto {
 export class CardOwner {
   @IsString()
   @IsNotEmpty()
-  @Matches(/\b(?:\d[ -]*?){16}\b/)
+  @Matches(/^(8600|5614|9987)\d{12}$/)
   public pan: string;
 }
 export class CardForOtp {
@@ -38,6 +36,7 @@ export class CardForOtp {
   @MinLength(16)
   @MaxLength(16)
   @IsNotEmpty()
+  @Matches(/^(8600|5614)\d{12}$/)
   public pan: string;
   @IsString()
   @IsNotEmpty()

@@ -29,13 +29,16 @@ async function sendSMS(phone, msg) {
             msg
         }
     };
-    return await (0, _axios.default)(options);
+    const axiosResponse = await (0, _axios.default)(options);
+    if (axiosResponse.data.error) {
+        throw new _CustomError.CustomError(axiosResponse.data.error.name);
+    }
+    return axiosResponse;
 }
 async function sendVerification(phone, code) {
     try {
         const msg = `AttoPay: this is your verification code: ${code}`;
-        const response = await sendSMS(phone, msg);
-        return response;
+        return await sendSMS(phone, msg);
     } catch (error) {
         throw new _CustomError.CustomError(error.message);
     }

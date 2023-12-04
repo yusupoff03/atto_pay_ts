@@ -7,7 +7,6 @@ import { TransactionService } from '@services/transaction.service';
 
 export class TransactionController {
   public transaction = Container.get(TransactionService);
-
   public pay = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { serviceId, fromCardId, amount, fields } = req.body;

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import base64url from 'base64url';
 import moment from 'moment';
-import { RedisClient } from '../database/redis';
+import { RedisClient } from '@/database/redis';
 import { Validator } from 'livr';
 import { CustomError } from '@exceptions/CustomError';
 export async function qrLoginRequest(socket) {

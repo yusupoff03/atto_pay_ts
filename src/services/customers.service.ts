@@ -10,7 +10,6 @@ import { LoginQr, VerifyDto } from '@dtos/customer.dto';
 import { createToken } from '@services/auth.service';
 import { TokenData } from '@interfaces/auth.interface';
 import io from '@/socket/socket';
-import { Request } from 'express';
 import { sendVerification } from '@services/sms.service';
 @Service()
 export class CustomerService {
@@ -28,9 +27,36 @@ export class CustomerService {
       [customerId],
     );
     if (!rowCount) throw new CustomError('USER_NOT_FOUND');
+    const { rows: summary } = await pg.query(
+      `
+with my_bank_cards as (
+  select id, pan from customer_card where customer_id = $1
+)
+select
+sum(case when type = 'expense' then amount else 0 END) as expense,
+count(case when type = 'expense' then 1 else null END) as expense_count,
+sum(case when type = 'income' then amount else 0 END) as income,
+count(case when type = 'income' then 1 else null END) as income_count
+from (
+  select amount, type
+  from transfer
+  where extract(month from created_at) = extract(month from current_date)
+    and owner_id = $1
+    and (sender_id in (select id from my_bank_cards) and type = 'expense')
+      or (receiver_id in (select id from my_bank_cards) and type = 'income')
+  union all
+  select amount, type
+  from payment
+  where extract(month from created_at) = extract(month from current_date)
+    and owner_id = $1
+    and sender_id in (select id from my_bank_cards) and type = 'expense'
+) as combined_data;`,
+      [customerId],
+    );
     const { rows: cards } = await pg.query(`Select sum(balance) from customer_card where customer_id =$1`, [customerId]);
     const customer: Customer = rows[0];
     customer.balance = cards[0].sum;
+    customer.summary = summary[0];
     return customer;
   }
   public async updateCustomer(customerId: string, customerData: UpdateCustomerData, image: any): Promise<Customer> {
@@ -145,7 +171,7 @@ on conflict do nothing`,
     return true;
   }
   public async loginWithQr(qrLogin: LoginQr, customerId: string): Promise<void> {
-    const redisQr = await this.redis.hGet('qr_login', customerId);
+    const redisQr = await this.redis.hGet('qr_login', qrLogin.allowDeviceId);
     if (!redisQr) throw new CustomError('INVALID_REQUEST');
     const qrObject = JSON.parse(redisQr);
     if (qrObject.key !== qrLogin.key) throw new CustomError('INVALID_REQUEST');
@@ -153,7 +179,8 @@ on conflict do nothing`,
     if (!rows[0]) throw new CustomError('USER_NOT_FOUND');
     const customer: Customer = rows[0];
     const tokenData: TokenData = createToken(customer);
-    io.to(qrObject.socketId).emit(tokenData.token);
+    console.log(qrObject.socketId);
+    io.to(qrObject.socketId).emit('qr_login_allow', { token: tokenData.token });
     return;
   }
   public async getDevices(customerId: string): Promise<any> {
@@ -182,6 +209,7 @@ on conflict do nothing`,
       expiresAt: moment().add(2, 'minutes').valueOf(),
       numAttempt: 0,
     };
+    console.log(deviceId);
     const device_phone = {
       phone: verify.phone,
       deviceId: deviceId,

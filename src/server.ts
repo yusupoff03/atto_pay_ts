@@ -10,6 +10,7 @@ import { ServiceRoute } from '@routes/service.route';
 import { TransactionRoute } from '@routes/transaction.route';
 import http from 'http';
 import io from '@/socket/socket';
+import { TransportRoute } from '@routes/transport.route';
 
 ValidateEnv();
 const app = new App([
@@ -21,6 +22,7 @@ const app = new App([
   new MerchantRoute(),
   new ServiceRoute(),
   new TransactionRoute(),
+  new TransportRoute(),
 ]);
 const server = http.createServer(app.getServer());
 io.attach(server);

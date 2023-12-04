@@ -50,6 +50,9 @@ let RedisClient = class RedisClient {
     hDel(key, field, cb = ()=>{}) {
         return this.execute(this.client.hDel(key, field), cb);
     }
+    hGetAll(key, cb = ()=>{}) {
+        return this.execute(this.client.get(key), cb);
+    }
     disconnect() {
         this.client.quit();
     }

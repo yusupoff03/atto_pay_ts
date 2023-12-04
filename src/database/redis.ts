@@ -39,7 +39,9 @@ export class RedisClient {
   public hDel(key: string, field: string, cb: (err: Error | null, result?: number) => void = () => {}): Promise<number> {
     return this.execute(this.client.hDel(key, field), cb);
   }
-
+  public hGetAll(key: string, cb: (err: Error | null, result?: string | null) => void = () => {}): Promise<string | null> {
+    return this.execute(this.client.get(key), cb);
+  }
   public disconnect(): void {
     this.client.quit();
   }
